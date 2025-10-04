@@ -48,6 +48,17 @@ export default function DashboardLayout({ children, userRole = "member" }: Dashb
     { icon: MessageSquare, label: "Forum", path: "/member/forum" },
   ];
 
+  const adminNavItems = [
+    { icon: LayoutDashboard, label: "Dashboard", path: "/admin/dashboard" },
+    { icon: User, label: "Members", path: "/admin/members" },
+    { icon: Calendar, label: "Events", path: "/admin/events" },
+    { icon: CreditCard, label: "Payments", path: "/admin/payments" },
+    { icon: BookOpen, label: "Resources", path: "/admin/resources" },
+    { icon: MessageSquare, label: "Forum", path: "/admin/forum" },
+  ];
+
+  const navItems = userRole === "admin" ? adminNavItems : memberNavItems;
+
   const isActive = (path: string) => location.pathname === path;
 
   return (
@@ -71,7 +82,7 @@ export default function DashboardLayout({ children, userRole = "member" }: Dashb
         </div>
 
         <nav className="flex-1 p-4 space-y-2">
-          {memberNavItems.map((item) => (
+          {navItems.map((item) => (
             <Link key={item.path} to={item.path}>
               <Button
                 variant={isActive(item.path) ? "default" : "ghost"}
@@ -110,7 +121,7 @@ export default function DashboardLayout({ children, userRole = "member" }: Dashb
             </div>
 
             <nav className="p-4 space-y-2">
-              {memberNavItems.map((item) => (
+              {navItems.map((item) => (
                 <Link key={item.path} to={item.path} onClick={() => setMobileMenuOpen(false)}>
                   <Button
                     variant={isActive(item.path) ? "default" : "ghost"}

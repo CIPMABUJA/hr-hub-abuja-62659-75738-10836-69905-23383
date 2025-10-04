@@ -24,6 +24,11 @@ import CPDPage from "./pages/member/CPDPage";
 import EventsPage from "./pages/member/EventsPage";
 import ResourcesPage from "./pages/member/ResourcesPage";
 import ForumPage from "./pages/member/ForumPage";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import MembersManagement from "./pages/admin/MembersManagement";
+import EventsManagement from "./pages/admin/EventsManagement";
+import PaymentsManagement from "./pages/admin/PaymentsManagement";
+import SettingsPage from "./pages/admin/SettingsPage";
 
 const queryClient = new QueryClient();
 
@@ -58,6 +63,13 @@ const App = () => (
           <Route path="/member/events" element={<EventsPage />} />
           <Route path="/member/resources" element={<ResourcesPage />} />
           <Route path="/member/forum" element={<ForumPage />} />
+          
+          {/* Admin Portal Routes */}
+          <Route path="/admin/dashboard" element={<AdminDashboard />} />
+          <Route path="/admin/members" element={<MembersManagement />} />
+          <Route path="/admin/events" element={<EventsManagement />} />
+          <Route path="/admin/payments" element={<PaymentsManagement />} />
+          <Route path="/admin/settings" element={<SettingsPage />} />
           
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
