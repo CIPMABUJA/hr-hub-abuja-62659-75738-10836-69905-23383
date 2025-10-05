@@ -240,10 +240,7 @@ export default function Apply() {
                           
                           
                         </div>
-                        <div>
-                          <label className="block text-sm font-medium mb-2">Valid ID Card *</label>
-                          <Input type="file" accept=".pdf,.jpg,.jpeg,.png" required />
-                        </div>
+                        
                         
                       </div>
                     </div>
