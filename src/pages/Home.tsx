@@ -63,7 +63,7 @@ const stats = [{
   value: "1000+"
 }];
 const teamMembers = [{
-  name: "Daniel Afolabi MCIPM",
+  name: "Daniel Afolabi ACIPM",
   role: "Chairman",
   initials: "DA",
   image: chairmanPhoto
