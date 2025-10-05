@@ -73,6 +73,11 @@ const teamMembers = [{
   initials: "AS",
   image: viceChairmanPhoto
 }, {
+  name: "Mrs Rachael Adegbe, MCIPM",
+  role: "Branch Secretary",
+  initials: "RA",
+  image: branchSecretaryPhoto
+}, {
   name: "Mohammed Umar Ali, ACIPM",
   role: "Assistant Secretary/PRO",
   initials: "MA",
@@ -87,11 +92,6 @@ const teamMembers = [{
   role: "Branch Treasurer",
   initials: "AF",
   image: branchTreasurerPhoto
-}, {
-  name: "Mrs Rachael Adegbe, MCIPM",
-  role: "Branch Secretary",
-  initials: "RA",
-  image: branchSecretaryPhoto
 }];
 const galleryImages = [
   gallery1,
