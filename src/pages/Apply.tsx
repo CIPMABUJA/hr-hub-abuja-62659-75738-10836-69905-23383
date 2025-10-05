@@ -6,10 +6,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { CheckCircle2 } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-
 export default function Apply() {
-  return (
-    <div className="min-h-screen flex flex-col">
+  return <div className="min-h-screen flex flex-col">
       <Header />
       
       <main className="flex-1">
@@ -239,17 +237,14 @@ export default function Apply() {
                           <Input type="file" accept="image/*" required />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium mb-2">Educational Certificate *</label>
-                          <Input type="file" accept=".pdf,.jpg,.jpeg,.png" required />
+                          
+                          
                         </div>
                         <div>
                           <label className="block text-sm font-medium mb-2">Valid ID Card *</label>
                           <Input type="file" accept=".pdf,.jpg,.jpeg,.png" required />
                         </div>
-                        <div>
-                          <label className="block text-sm font-medium mb-2">CV/Resume</label>
-                          <Input type="file" accept=".pdf,.doc,.docx" />
-                        </div>
+                        
                       </div>
                     </div>
 
@@ -287,6 +282,5 @@ export default function Apply() {
       </main>
 
       <Footer />
-    </div>
-  );
+    </div>;
 }
