@@ -14,7 +14,7 @@ import gallery4 from "@/assets/gallery/event-4.jpg";
 import gallery5 from "@/assets/gallery/event-5.jpg";
 import gallery6 from "@/assets/gallery/event-6.jpg";
 import gallery7 from "@/assets/gallery/event-7.jpg";
-import chairmanPhoto from "@/assets/chairman.png";
+import chairmanPhoto from "@/assets/chairman.jpg";
 import viceChairmanPhoto from "@/assets/vice-chairman.png";
 import assistantSecretaryPhoto from "@/assets/assistant-secretary.png";
 import financialSecretaryPhoto from "@/assets/financial-secretary.png";
