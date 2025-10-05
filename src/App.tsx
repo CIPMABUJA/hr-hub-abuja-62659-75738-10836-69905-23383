@@ -3,6 +3,8 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "@/hooks/useAuth";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Home from "./pages/Home";
 import About from "./pages/About";
 import Services from "./pages/Services";
@@ -38,7 +40,8 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
+        <AuthProvider>
+          <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/about" element={<About />} />
           <Route path="/services" element={<Services />} />
@@ -55,25 +58,26 @@ const App = () => (
           <Route path="/auth/forgot-password" element={<ForgotPasswordPage />} />
           
           {/* Member Portal Routes */}
-          <Route path="/member/dashboard" element={<MemberDashboard />} />
-          <Route path="/member/profile" element={<ProfilePage />} />
-          <Route path="/member/membership" element={<MembershipPage />} />
-          <Route path="/member/payments" element={<PaymentsPage />} />
-          <Route path="/member/cpd" element={<CPDPage />} />
-          <Route path="/member/events" element={<EventsPage />} />
-          <Route path="/member/resources" element={<ResourcesPage />} />
-          <Route path="/member/forum" element={<ForumPage />} />
+          <Route path="/member/dashboard" element={<ProtectedRoute><MemberDashboard /></ProtectedRoute>} />
+          <Route path="/member/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+          <Route path="/member/membership" element={<ProtectedRoute><MembershipPage /></ProtectedRoute>} />
+          <Route path="/member/payments" element={<ProtectedRoute><PaymentsPage /></ProtectedRoute>} />
+          <Route path="/member/cpd" element={<ProtectedRoute><CPDPage /></ProtectedRoute>} />
+          <Route path="/member/events" element={<ProtectedRoute><EventsPage /></ProtectedRoute>} />
+          <Route path="/member/resources" element={<ProtectedRoute><ResourcesPage /></ProtectedRoute>} />
+          <Route path="/member/forum" element={<ProtectedRoute><ForumPage /></ProtectedRoute>} />
           
           {/* Admin Portal Routes */}
-          <Route path="/admin/dashboard" element={<AdminDashboard />} />
-          <Route path="/admin/members" element={<MembersManagement />} />
-          <Route path="/admin/events" element={<EventsManagement />} />
-          <Route path="/admin/payments" element={<PaymentsManagement />} />
-          <Route path="/admin/settings" element={<SettingsPage />} />
+          <Route path="/admin/dashboard" element={<ProtectedRoute requireAdmin><AdminDashboard /></ProtectedRoute>} />
+          <Route path="/admin/members" element={<ProtectedRoute requireAdmin><MembersManagement /></ProtectedRoute>} />
+          <Route path="/admin/events" element={<ProtectedRoute requireAdmin><EventsManagement /></ProtectedRoute>} />
+          <Route path="/admin/payments" element={<ProtectedRoute requireAdmin><PaymentsManagement /></ProtectedRoute>} />
+          <Route path="/admin/settings" element={<ProtectedRoute requireAdmin><SettingsPage /></ProtectedRoute>} />
           
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
-        </Routes>
+          </Routes>
+        </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

@@ -1,11 +1,13 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import cipmLogo from "@/assets/cipm-logo.png";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -13,16 +15,70 @@ export default function RegisterPage() {
     lastName: "",
     email: "",
     phone: "",
-    membershipType: "",
+    membershipType: "student",
     organization: "",
     password: "",
     confirmPassword: "",
   });
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Registration will be implemented later
-    console.log("Register:", formData);
+    
+    if (formData.password !== formData.confirmPassword) {
+      toast.error("Passwords do not match");
+      return;
+    }
+
+    if (formData.password.length < 6) {
+      toast.error("Password must be at least 6 characters");
+      return;
+    }
+
+    setLoading(true);
+
+    const redirectUrl = `${window.location.origin}/auth/login`;
+
+    const { data, error } = await supabase.auth.signUp({
+      email: formData.email,
+      password: formData.password,
+      options: {
+        emailRedirectTo: redirectUrl,
+        data: {
+          first_name: formData.firstName,
+          last_name: formData.lastName,
+          phone: formData.phone,
+        },
+      },
+    });
+
+    if (error) {
+      toast.error(error.message);
+      setLoading(false);
+      return;
+    }
+
+    // Create membership record
+    if (data.user) {
+      const memberId = `CIPM-${Date.now().toString().slice(-6)}`;
+      
+      const { error: membershipError } = await supabase
+        .from('memberships')
+        .insert({
+          user_id: data.user.id,
+          member_id: memberId,
+          category: formData.membershipType as any,
+          status: 'pending',
+        });
+
+      if (membershipError) {
+        console.error("Error creating membership:", membershipError);
+      }
+    }
+
+    toast.success("Account created successfully! Please sign in.");
+    navigate('/auth/login');
   };
 
   const handleChange = (field: string, value: string) => {
@@ -100,8 +156,9 @@ export default function RegisterPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="student">Student Member</SelectItem>
+                    <SelectItem value="graduate">Graduate Member</SelectItem>
                     <SelectItem value="associate">Associate Member</SelectItem>
-                    <SelectItem value="full">Full Member</SelectItem>
+                    <SelectItem value="member">Member</SelectItem>
                     <SelectItem value="fellow">Fellow</SelectItem>
                   </SelectContent>
                 </Select>
@@ -144,8 +201,8 @@ export default function RegisterPage() {
               </div>
             </div>
 
-            <Button type="submit" className="w-full">
-              Create Account
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? "Creating account..." : "Create Account"}
             </Button>
 
             <div className="text-center text-sm text-muted-foreground">
