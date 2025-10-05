@@ -14,16 +14,385 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      cpd_records: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          date: string
+          description: string | null
+          evidence_url: string | null
+          hours: number
+          id: string
+          title: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          date: string
+          description?: string | null
+          evidence_url?: string | null
+          hours: number
+          id?: string
+          title: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          date?: string
+          description?: string | null
+          evidence_url?: string | null
+          hours?: number
+          id?: string
+          title?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      event_registrations: {
+        Row: {
+          attended: boolean | null
+          event_id: string
+          id: string
+          payment_status: Database["public"]["Enums"]["payment_status"] | null
+          registration_date: string | null
+          user_id: string
+        }
+        Insert: {
+          attended?: boolean | null
+          event_id: string
+          id?: string
+          payment_status?: Database["public"]["Enums"]["payment_status"] | null
+          registration_date?: string | null
+          user_id: string
+        }
+        Update: {
+          attended?: boolean | null
+          event_id?: string
+          id?: string
+          payment_status?: Database["public"]["Enums"]["payment_status"] | null
+          registration_date?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_registrations_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      events: {
+        Row: {
+          capacity: number | null
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          end_date: string | null
+          event_date: string
+          id: string
+          image_url: string | null
+          location: string | null
+          price: number | null
+          status: Database["public"]["Enums"]["event_status"] | null
+          title: string
+          updated_at: string | null
+          venue: string | null
+        }
+        Insert: {
+          capacity?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          end_date?: string | null
+          event_date: string
+          id?: string
+          image_url?: string | null
+          location?: string | null
+          price?: number | null
+          status?: Database["public"]["Enums"]["event_status"] | null
+          title: string
+          updated_at?: string | null
+          venue?: string | null
+        }
+        Update: {
+          capacity?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          end_date?: string | null
+          event_date?: string
+          id?: string
+          image_url?: string | null
+          location?: string | null
+          price?: number | null
+          status?: Database["public"]["Enums"]["event_status"] | null
+          title?: string
+          updated_at?: string | null
+          venue?: string | null
+        }
+        Relationships: []
+      }
+      forum_comments: {
+        Row: {
+          content: string
+          created_at: string | null
+          id: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          id?: string
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          id?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "forum_comments_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "forum_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      forum_posts: {
+        Row: {
+          category: string | null
+          content: string
+          created_at: string | null
+          id: string
+          title: string
+          updated_at: string | null
+          user_id: string
+          views: number | null
+        }
+        Insert: {
+          category?: string | null
+          content: string
+          created_at?: string | null
+          id?: string
+          title: string
+          updated_at?: string | null
+          user_id: string
+          views?: number | null
+        }
+        Update: {
+          category?: string | null
+          content?: string
+          created_at?: string | null
+          id?: string
+          title?: string
+          updated_at?: string | null
+          user_id?: string
+          views?: number | null
+        }
+        Relationships: []
+      }
+      memberships: {
+        Row: {
+          category: Database["public"]["Enums"]["membership_category"]
+          created_at: string | null
+          expiry_date: string | null
+          id: string
+          join_date: string | null
+          member_id: string
+          status: Database["public"]["Enums"]["membership_status"]
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          category: Database["public"]["Enums"]["membership_category"]
+          created_at?: string | null
+          expiry_date?: string | null
+          id?: string
+          join_date?: string | null
+          member_id: string
+          status?: Database["public"]["Enums"]["membership_status"]
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          category?: Database["public"]["Enums"]["membership_category"]
+          created_at?: string | null
+          expiry_date?: string | null
+          id?: string
+          join_date?: string | null
+          member_id?: string
+          status?: Database["public"]["Enums"]["membership_status"]
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      payments: {
+        Row: {
+          amount: number
+          created_at: string | null
+          description: string | null
+          id: string
+          payment_date: string | null
+          payment_method: string | null
+          payment_type: string
+          reference: string | null
+          status: Database["public"]["Enums"]["payment_status"] | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          payment_date?: string | null
+          payment_method?: string | null
+          payment_type: string
+          reference?: string | null
+          status?: Database["public"]["Enums"]["payment_status"] | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          payment_date?: string | null
+          payment_method?: string | null
+          payment_type?: string
+          reference?: string | null
+          status?: Database["public"]["Enums"]["payment_status"] | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          created_at: string | null
+          email: string
+          first_name: string
+          id: string
+          last_name: string
+          phone: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string | null
+          email: string
+          first_name: string
+          id: string
+          last_name: string
+          phone?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string | null
+          email?: string
+          first_name?: string
+          id?: string
+          last_name?: string
+          phone?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      resources: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          description: string | null
+          file_type: string | null
+          file_url: string
+          id: string
+          title: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          file_type?: string | null
+          file_url: string
+          id?: string
+          title: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          file_type?: string | null
+          file_url?: string
+          id?: string
+          title?: string
+          uploaded_by?: string | null
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "member"
+      event_status: "upcoming" | "ongoing" | "completed" | "cancelled"
+      membership_category:
+        | "student"
+        | "graduate"
+        | "associate"
+        | "member"
+        | "fellow"
+      membership_status: "active" | "inactive" | "pending" | "expired"
+      payment_status: "pending" | "completed" | "failed" | "refunded"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +519,18 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "member"],
+      event_status: ["upcoming", "ongoing", "completed", "cancelled"],
+      membership_category: [
+        "student",
+        "graduate",
+        "associate",
+        "member",
+        "fellow",
+      ],
+      membership_status: ["active", "inactive", "pending", "expired"],
+      payment_status: ["pending", "completed", "failed", "refunded"],
+    },
   },
 } as const
