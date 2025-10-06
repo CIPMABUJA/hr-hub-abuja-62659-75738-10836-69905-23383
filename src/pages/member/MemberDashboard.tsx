@@ -2,29 +2,89 @@ import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, CreditCard, Award, Users, ArrowRight, CheckCircle, Clock } from "lucide-react";
+import { Calendar, CreditCard, Award, CheckCircle, ArrowRight, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { useMembership } from "@/hooks/useMembership";
+import { format } from "date-fns";
 
 export default function MemberDashboard() {
-  // Mock data - will be replaced with real data later
-  const membershipStatus = "Active";
-  const cpdPoints = 45;
-  const upcomingEvents = [
-    { id: 1, title: "HR Summit 2025", date: "March 15, 2025", status: "Registered" },
-    { id: 2, title: "Leadership Masterclass", date: "March 28, 2025", status: "Available" },
-  ];
+  const { user } = useAuth();
+  const { membership } = useMembership();
+  const [cpdPoints, setCpdPoints] = useState(0);
+  const [upcomingEvents, setUpcomingEvents] = useState<any[]>([]);
+  const [recentPayments, setRecentPayments] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const recentPayments = [
-    { id: 1, description: "Annual Membership Dues", amount: "₦50,000", date: "Jan 15, 2025", status: "Paid" },
-    { id: 2, description: "CPD Workshop", amount: "₦15,000", date: "Feb 10, 2025", status: "Paid" },
-  ];
+  useEffect(() => {
+    if (user) {
+      fetchDashboardData();
+    }
+  }, [user]);
+
+  const fetchDashboardData = async () => {
+    if (!user) return;
+
+    setIsLoading(true);
+
+    // Fetch CPD points
+    const currentYear = new Date().getFullYear();
+    const { data: cpdData } = await supabase
+      .from('cpd_records')
+      .select('hours')
+      .eq('user_id', user.id)
+      .gte('date', `${currentYear}-01-01`);
+
+    const totalPoints = cpdData?.reduce((sum, record) => sum + Number(record.hours || 0), 0) || 0;
+    setCpdPoints(totalPoints);
+
+    // Fetch upcoming registered events
+    const { data: regData } = await supabase
+      .from('event_registrations')
+      .select('*, events(*)')
+      .eq('user_id', user.id)
+      .gte('events.event_date', new Date().toISOString())
+      .limit(2);
+
+    setUpcomingEvents(regData || []);
+
+    // Fetch recent payments
+    const { data: paymentsData } = await supabase
+      .from('payments')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('payment_date', { ascending: false })
+      .limit(2);
+
+    setRecentPayments(paymentsData || []);
+
+    setIsLoading(false);
+  };
+
+  const totalPaid = recentPayments
+    .filter(p => p.status === 'completed')
+    .reduce((sum, p) => sum + Number(p.amount), 0);
+
+  if (isLoading) {
+    return (
+      <DashboardLayout userRole="member">
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout userRole="member">
       <div className="space-y-6">
         {/* Welcome Section */}
         <div>
-          <h2 className="text-3xl font-bold text-foreground">Welcome Back, John!</h2>
+          <h2 className="text-3xl font-bold text-foreground">
+            Welcome Back, {user?.email?.split('@')[0] || 'Member'}!
+          </h2>
           <p className="text-muted-foreground mt-1">Here's what's happening with your membership</p>
         </div>
 
@@ -38,10 +98,14 @@ export default function MemberDashboard() {
               <CheckCircle className="h-4 w-4 text-secondary" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{membershipStatus}</div>
-              <p className="text-xs text-muted-foreground mt-1">
-                Renews: Dec 31, 2025
-              </p>
+              <div className="text-2xl font-bold">
+                {membership?.status.charAt(0).toUpperCase() + membership?.status.slice(1) || 'N/A'}
+              </div>
+              {membership?.expiry_date && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  Expires: {format(new Date(membership.expiry_date), 'MMM dd, yyyy')}
+                </p>
+              )}
             </CardContent>
           </Card>
 
@@ -55,7 +119,7 @@ export default function MemberDashboard() {
             <CardContent>
               <div className="text-2xl font-bold">{cpdPoints}</div>
               <p className="text-xs text-muted-foreground mt-1">
-                55 points to target
+                {Math.max(0, 40 - cpdPoints)} points to target
               </p>
             </CardContent>
           </Card>
@@ -68,9 +132,9 @@ export default function MemberDashboard() {
               <Calendar className="h-4 w-4 text-primary" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">2</div>
+              <div className="text-2xl font-bold">{upcomingEvents.length}</div>
               <p className="text-xs text-muted-foreground mt-1">
-                Events this month
+                Registered events
               </p>
             </CardContent>
           </Card>
@@ -83,7 +147,7 @@ export default function MemberDashboard() {
               <CreditCard className="h-4 w-4 text-primary" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">₦65,000</div>
+              <div className="text-2xl font-bold">₦{totalPaid.toLocaleString()}</div>
               <p className="text-xs text-muted-foreground mt-1">
                 Paid this year
               </p>
@@ -104,22 +168,26 @@ export default function MemberDashboard() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {upcomingEvents.map((event) => (
-                <div key={event.id} className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex items-center gap-4">
-                    <Calendar className="h-5 w-5 text-primary" />
-                    <div>
-                      <h4 className="font-medium">{event.title}</h4>
-                      <p className="text-sm text-muted-foreground">{event.date}</p>
+            {upcomingEvents.length === 0 ? (
+              <p className="text-center text-muted-foreground py-4">No upcoming events registered</p>
+            ) : (
+              <div className="space-y-4">
+                {upcomingEvents.map((reg) => (
+                  <div key={reg.id} className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className="flex items-center gap-4">
+                      <Calendar className="h-5 w-5 text-primary" />
+                      <div>
+                        <h4 className="font-medium">{reg.events.title}</h4>
+                        <p className="text-sm text-muted-foreground">
+                          {format(new Date(reg.events.event_date), 'MMM dd, yyyy')}
+                        </p>
+                      </div>
                     </div>
+                    <Badge variant="default">Registered</Badge>
                   </div>
-                  <Badge variant={event.status === "Registered" ? "default" : "secondary"}>
-                    {event.status}
-                  </Badge>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -136,25 +204,31 @@ export default function MemberDashboard() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {recentPayments.map((payment) => (
-                <div key={payment.id} className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex items-center gap-4">
-                    <CreditCard className="h-5 w-5 text-primary" />
-                    <div>
-                      <h4 className="font-medium">{payment.description}</h4>
-                      <p className="text-sm text-muted-foreground">{payment.date}</p>
+            {recentPayments.length === 0 ? (
+              <p className="text-center text-muted-foreground py-4">No payment history yet</p>
+            ) : (
+              <div className="space-y-4">
+                {recentPayments.map((payment) => (
+                  <div key={payment.id} className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className="flex items-center gap-4">
+                      <CreditCard className="h-5 w-5 text-primary" />
+                      <div>
+                        <h4 className="font-medium">{payment.description}</h4>
+                        <p className="text-sm text-muted-foreground">
+                          {format(new Date(payment.payment_date), 'MMM dd, yyyy')}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-medium">₦{Number(payment.amount).toLocaleString()}</p>
+                      <Badge variant="secondary" className="mt-1">
+                        {payment.status}
+                      </Badge>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="font-medium">{payment.amount}</p>
-                    <Badge variant="secondary" className="mt-1">
-                      {payment.status}
-                    </Badge>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -168,7 +242,7 @@ export default function MemberDashboard() {
               <Link to="/member/membership">
                 <div className="flex flex-col items-center gap-2">
                   <CheckCircle className="h-6 w-6" />
-                  <span>Renew Membership</span>
+                  <span>View Membership</span>
                 </div>
               </Link>
             </Button>
@@ -176,15 +250,15 @@ export default function MemberDashboard() {
               <Link to="/member/events">
                 <div className="flex flex-col items-center gap-2">
                   <Calendar className="h-6 w-6" />
-                  <span>Register for Event</span>
+                  <span>Browse Events</span>
                 </div>
               </Link>
             </Button>
             <Button variant="outline" className="h-auto py-4" asChild>
-              <Link to="/member/resources">
+              <Link to="/member/cpd">
                 <div className="flex flex-col items-center gap-2">
-                  <Users className="h-6 w-6" />
-                  <span>Browse Resources</span>
+                  <Award className="h-6 w-6" />
+                  <span>Log CPD Activity</span>
                 </div>
               </Link>
             </Button>

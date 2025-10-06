@@ -10,9 +10,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Download, CreditCard, FileText } from "lucide-react";
+import { Download, CreditCard, FileText, Loader2 } from "lucide-react";
 import { PaystackPayment } from "@/components/PaystackPayment";
 import { useAuth } from "@/hooks/useAuth";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { format } from "date-fns";
 
 const paymentHistory = [
   {
@@ -47,6 +50,54 @@ const paymentHistory = [
 
 export default function PaymentsPage() {
   const { user } = useAuth();
+  const [payments, setPayments] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (user) {
+      fetchPayments();
+    }
+  }, [user]);
+
+  const fetchPayments = async () => {
+    if (!user) return;
+
+    setIsLoading(true);
+    const { data, error } = await supabase
+      .from('payments')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('payment_date', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching payments:', error);
+    } else {
+      setPayments(data || []);
+    }
+    setIsLoading(false);
+  };
+
+  const currentYear = new Date().getFullYear();
+  const yearPayments = payments.filter(p => 
+    new Date(p.payment_date).getFullYear() === currentYear
+  );
+  
+  const totalPaid = yearPayments
+    .filter(p => p.status === 'completed')
+    .reduce((sum, p) => sum + Number(p.amount), 0);
+
+  const pendingPayments = yearPayments
+    .filter(p => p.status === 'pending')
+    .reduce((sum, p) => sum + Number(p.amount), 0);
+
+  const getStatusVariant = (status: string) => {
+    switch (status) {
+      case 'completed': return 'default';
+      case 'pending': return 'secondary';
+      case 'failed': return 'destructive';
+      default: return 'outline';
+    }
+  };
   
   return (
     <DashboardLayout>
@@ -64,8 +115,8 @@ export default function PaymentsPage() {
               <CreditCard className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">₦85,000</div>
-              <p className="text-xs text-muted-foreground">3 transactions</p>
+              <div className="text-2xl font-bold">₦{totalPaid.toLocaleString()}</div>
+              <p className="text-xs text-muted-foreground">{yearPayments.filter(p => p.status === 'completed').length} transactions</p>
             </CardContent>
           </Card>
 
@@ -75,8 +126,8 @@ export default function PaymentsPage() {
               <FileText className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">₦0</div>
-              <p className="text-xs text-muted-foreground">No pending payments</p>
+              <div className="text-2xl font-bold">₦{pendingPayments.toLocaleString()}</div>
+              <p className="text-xs text-muted-foreground">{yearPayments.filter(p => p.status === 'pending').length} pending</p>
             </CardContent>
           </Card>
 
@@ -118,37 +169,47 @@ export default function PaymentsPage() {
             <CardTitle>Payment History</CardTitle>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Invoice ID</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Description</TableHead>
-                  <TableHead>Amount</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {paymentHistory.map((payment) => (
-                  <TableRow key={payment.id}>
-                    <TableCell className="font-medium">{payment.id}</TableCell>
-                    <TableCell>{payment.date}</TableCell>
-                    <TableCell>{payment.description}</TableCell>
-                    <TableCell className="font-semibold">{payment.amount}</TableCell>
-                    <TableCell>
-                      <Badge variant="default">{payment.status}</Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button variant="ghost" size="sm">
-                        <Download className="h-4 w-4 mr-1" />
-                        Receipt
-                      </Button>
-                    </TableCell>
+            {isLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              </div>
+            ) : payments.length === 0 ? (
+              <p className="text-center text-muted-foreground py-8">No payment history yet.</p>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Reference</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Description</TableHead>
+                    <TableHead>Amount</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {payments.map((payment) => (
+                    <TableRow key={payment.id}>
+                      <TableCell className="font-medium">{payment.reference || 'N/A'}</TableCell>
+                      <TableCell>{format(new Date(payment.payment_date), 'MMM dd, yyyy')}</TableCell>
+                      <TableCell>{payment.description}</TableCell>
+                      <TableCell className="font-semibold">₦{Number(payment.amount).toLocaleString()}</TableCell>
+                      <TableCell>
+                        <Badge variant={getStatusVariant(payment.status)}>
+                          {payment.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button variant="ghost" size="sm">
+                          <Download className="h-4 w-4 mr-1" />
+                          Receipt
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
           </CardContent>
         </Card>
       </div>

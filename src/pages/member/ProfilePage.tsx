@@ -5,17 +5,22 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Camera, Save } from "lucide-react";
-import { useState } from "react";
+import { Camera, Save, Loader2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
 
 export default function ProfilePage() {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
-    firstName: "John",
-    lastName: "Doe",
-    email: "john.doe@example.com",
-    phone: "+234 123 456 7890",
-    organization: "Example Corp",
-    position: "HR Manager",
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    bio: "",
   });
 
   const [passwords, setPasswords] = useState({
@@ -24,14 +29,103 @@ export default function ProfilePage() {
     confirm: "",
   });
 
-  const handleProfileUpdate = (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log("Update profile:", formData);
+  useEffect(() => {
+    if (user) {
+      fetchProfile();
+    }
+  }, [user]);
+
+  const fetchProfile = async () => {
+    if (!user) return;
+
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', user.id)
+      .single();
+
+    if (error) {
+      console.error('Error fetching profile:', error);
+      return;
+    }
+
+    if (data) {
+      setFormData({
+        firstName: data.first_name || '',
+        lastName: data.last_name || '',
+        email: data.email || '',
+        phone: data.phone || '',
+        bio: data.bio || '',
+      });
+    }
   };
 
-  const handlePasswordChange = (e: React.FormEvent) => {
+  const handleProfileUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Change password:", passwords);
+    if (!user) return;
+
+    setIsLoading(true);
+    const { error } = await supabase
+      .from('profiles')
+      .update({
+        first_name: formData.firstName,
+        last_name: formData.lastName,
+        phone: formData.phone,
+        bio: formData.bio,
+      })
+      .eq('id', user.id);
+
+    setIsLoading(false);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update profile",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    toast({
+      title: "Success",
+      description: "Profile updated successfully",
+    });
+  };
+
+  const handlePasswordChange = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (passwords.new !== passwords.confirm) {
+      toast({
+        title: "Error",
+        description: "New passwords do not match",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    const { error } = await supabase.auth.updateUser({
+      password: passwords.new
+    });
+
+    setIsLoading(false);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    toast({
+      title: "Success",
+      description: "Password updated successfully",
+    });
+
+    setPasswords({ current: "", new: "", confirm: "" });
   };
 
   return (
@@ -59,9 +153,8 @@ export default function ProfilePage() {
                 </Button>
               </div>
               <div>
-                <h3 className="text-xl font-semibold">John Doe</h3>
-                <p className="text-sm text-muted-foreground">Member ID: CIPM-ABJ-12345</p>
-                <p className="text-sm text-muted-foreground">Full Member</p>
+                <h3 className="text-xl font-semibold">{formData.firstName} {formData.lastName}</h3>
+                <p className="text-sm text-muted-foreground">{formData.email}</p>
               </div>
             </div>
 
@@ -116,28 +209,31 @@ export default function ProfilePage() {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="organization">Organization</Label>
+                      <Label htmlFor="phone">Phone</Label>
                       <Input
-                        id="organization"
-                        value={formData.organization}
-                        onChange={(e) => setFormData({ ...formData, organization: e.target.value })}
+                        id="phone"
+                        value={formData.phone}
+                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                       />
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="position">Position</Label>
+                      <Label htmlFor="bio">Bio</Label>
                       <Input
-                        id="position"
-                        value={formData.position}
-                        onChange={(e) => setFormData({ ...formData, position: e.target.value })}
+                        id="bio"
+                        value={formData.bio}
+                        onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
                       />
                     </div>
                   </div>
 
                   <div className="flex justify-end">
-                    <Button type="submit">
-                      <Save className="mr-2 h-4 w-4" />
-                      Save Changes
+                    <Button type="submit" disabled={isLoading}>
+                      {isLoading ? (
+                        <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Saving...</>
+                      ) : (
+                        <><Save className="mr-2 h-4 w-4" />Save Changes</>
+                      )}
                     </Button>
                   </div>
                 </form>
@@ -184,7 +280,13 @@ export default function ProfilePage() {
                       </div>
 
                       <div className="flex justify-end">
-                        <Button type="submit">Update Password</Button>
+                        <Button type="submit" disabled={isLoading}>
+                          {isLoading ? (
+                            <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Updating...</>
+                          ) : (
+                            "Update Password"
+                          )}
+                        </Button>
                       </div>
                     </form>
                   </CardContent>

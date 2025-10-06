@@ -1,64 +1,100 @@
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar, MapPin, Clock, Users, ExternalLink } from "lucide-react";
-
-const upcomingEvents = [
-  {
-    id: 1,
-    title: "HR Technology & Innovation Summit 2024",
-    date: "May 15, 2024",
-    time: "9:00 AM - 5:00 PM",
-    location: "Transcorp Hilton, Abuja",
-    attendees: 250,
-    registered: false,
-    cpdPoints: 12,
-    type: "Conference",
-  },
-  {
-    id: 2,
-    title: "Employee Engagement Best Practices Workshop",
-    date: "May 22, 2024",
-    time: "2:00 PM - 5:00 PM",
-    location: "CIPM Secretariat, Abuja",
-    attendees: 50,
-    registered: true,
-    cpdPoints: 6,
-    type: "Workshop",
-  },
-  {
-    id: 3,
-    title: "Compensation & Benefits Seminar",
-    date: "June 5, 2024",
-    time: "10:00 AM - 1:00 PM",
-    location: "Virtual (Zoom)",
-    attendees: 100,
-    registered: false,
-    cpdPoints: 4,
-    type: "Seminar",
-  },
-];
-
-const pastEvents = [
-  {
-    id: 1,
-    title: "Leadership in HR Management Workshop",
-    date: "Mar 15, 2024",
-    attended: true,
-    cpdPoints: 8,
-  },
-  {
-    id: 2,
-    title: "Annual HR Conference 2024",
-    date: "Feb 20, 2024",
-    attended: true,
-    cpdPoints: 12,
-  },
-];
+import { Calendar, MapPin, Clock, Users, Loader2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
+import { format } from "date-fns";
 
 export default function EventsPage() {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [events, setEvents] = useState<any[]>([]);
+  const [registrations, setRegistrations] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    fetchData();
+  }, [user]);
+
+  const fetchData = async () => {
+    setIsLoading(true);
+    
+    // Fetch all events
+    const { data: eventsData } = await supabase
+      .from('events')
+      .select('*')
+      .order('event_date', { ascending: true });
+
+    // Fetch user registrations
+    if (user) {
+      const { data: regsData } = await supabase
+        .from('event_registrations')
+        .select('*, events(*)')
+        .eq('user_id', user.id);
+      
+      setRegistrations(regsData || []);
+    }
+
+    setEvents(eventsData || []);
+    setIsLoading(false);
+  };
+
+  const isRegistered = (eventId: string) => {
+    return registrations.some(reg => reg.event_id === eventId);
+  };
+
+  const handleRegister = async (eventId: string) => {
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to register for events",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const { error } = await supabase
+      .from('event_registrations')
+      .insert({
+        user_id: user.id,
+        event_id: eventId,
+      });
+
+    if (error) {
+      toast({
+        title: "Registration Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    toast({
+      title: "Success",
+      description: "Successfully registered for event",
+    });
+
+    fetchData();
+  };
+
+  const upcomingEvents = events.filter(e => new Date(e.event_date) > new Date());
+  const pastEvents = events.filter(e => new Date(e.event_date) <= new Date());
+
+  if (isLoading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </DashboardLayout>
+    );
+  }
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -75,123 +111,120 @@ export default function EventsPage() {
           </TabsList>
 
           <TabsContent value="upcoming" className="space-y-4">
-            {upcomingEvents.map((event) => (
-              <Card key={event.id}>
-                <CardContent className="pt-6">
-                  <div className="flex flex-col md:flex-row gap-4">
-                    <div className="flex-1 space-y-3">
-                      <div className="flex items-start justify-between gap-4">
-                        <div>
-                          <h3 className="text-xl font-bold mb-2">{event.title}</h3>
-                          <Badge variant="outline">{event.type}</Badge>
-                        </div>
-                        <Badge variant="secondary">{event.cpdPoints} CPD Points</Badge>
-                      </div>
-
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2 text-muted-foreground">
-                          <Calendar className="h-4 w-4" />
-                          <span>{event.date}</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-muted-foreground">
-                          <Clock className="h-4 w-4" />
-                          <span>{event.time}</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-muted-foreground">
-                          <MapPin className="h-4 w-4" />
-                          <span>{event.location}</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-muted-foreground">
-                          <Users className="h-4 w-4" />
-                          <span>{event.attendees} attendees</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col gap-2 md:items-end justify-between">
-                      {event.registered ? (
-                        <>
-                          <Badge variant="default">Registered</Badge>
-                          <div className="flex flex-col gap-2">
-                            <Button variant="outline">View Details</Button>
-                            <Button variant="ghost">Cancel Registration</Button>
-                          </div>
-                        </>
-                      ) : (
-                        <>
-                          <div />
-                          <Button>Register Now</Button>
-                        </>
-                      )}
-                    </div>
-                  </div>
+            {upcomingEvents.length === 0 ? (
+              <Card>
+                <CardContent className="pt-6 text-center py-12">
+                  <p className="text-muted-foreground">No upcoming events at the moment.</p>
                 </CardContent>
               </Card>
-            ))}
+            ) : (
+              upcomingEvents.map((event) => (
+                <Card key={event.id}>
+                  <CardContent className="pt-6">
+                    <div className="flex flex-col md:flex-row gap-4">
+                      <div className="flex-1 space-y-3">
+                        <div className="flex items-start justify-between gap-4">
+                          <div>
+                            <h3 className="text-xl font-bold mb-2">{event.title}</h3>
+                            <Badge variant="secondary">{event.status}</Badge>
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2 text-muted-foreground">
+                            <Calendar className="h-4 w-4" />
+                            <span>{format(new Date(event.event_date), 'MMM dd, yyyy')}</span>
+                          </div>
+                          {event.location && (
+                            <div className="flex items-center gap-2 text-muted-foreground">
+                              <MapPin className="h-4 w-4" />
+                              <span>{event.location}</span>
+                            </div>
+                          )}
+                          {event.capacity && (
+                            <div className="flex items-center gap-2 text-muted-foreground">
+                              <Users className="h-4 w-4" />
+                              <span>{event.capacity} capacity</span>
+                            </div>
+                          )}
+                        </div>
+
+                        {event.description && (
+                          <p className="text-sm text-muted-foreground">{event.description}</p>
+                        )}
+                      </div>
+
+                      <div className="flex flex-col gap-2 md:items-end justify-between">
+                        {isRegistered(event.id) ? (
+                          <Badge variant="default">Registered</Badge>
+                        ) : (
+                          <Button onClick={() => handleRegister(event.id)}>Register Now</Button>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            )}
           </TabsContent>
 
           <TabsContent value="registered" className="space-y-4">
-            {upcomingEvents.filter(e => e.registered).map((event) => (
-              <Card key={event.id}>
-                <CardContent className="pt-6">
-                  <div className="flex items-start justify-between">
-                    <div className="space-y-2">
-                      <h3 className="text-xl font-bold">{event.title}</h3>
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        <Calendar className="h-4 w-4" />
-                        <span>{event.date}</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        <MapPin className="h-4 w-4" />
-                        <span>{event.location}</span>
-                      </div>
-                    </div>
-                    <div className="flex flex-col gap-2 items-end">
-                      <Badge variant="default">Confirmed</Badge>
-                      <Button variant="outline" size="sm">
-                        <ExternalLink className="mr-2 h-4 w-4" />
-                        Event Details
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-            {upcomingEvents.filter(e => e.registered).length === 0 && (
+            {registrations.length === 0 ? (
               <Card>
                 <CardContent className="pt-6 text-center py-12">
                   <p className="text-muted-foreground">No registered events yet. Browse upcoming events to register.</p>
                 </CardContent>
               </Card>
+            ) : (
+              registrations.map((reg) => (
+                <Card key={reg.id}>
+                  <CardContent className="pt-6">
+                    <div className="flex items-start justify-between">
+                      <div className="space-y-2">
+                        <h3 className="text-xl font-bold">{reg.events.title}</h3>
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                          <Calendar className="h-4 w-4" />
+                          <span>{format(new Date(reg.events.event_date), 'MMM dd, yyyy')}</span>
+                        </div>
+                        {reg.events.location && (
+                          <div className="flex items-center gap-2 text-muted-foreground">
+                            <MapPin className="h-4 w-4" />
+                            <span>{reg.events.location}</span>
+                          </div>
+                        )}
+                      </div>
+                      <Badge variant="default">Confirmed</Badge>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
             )}
           </TabsContent>
 
           <TabsContent value="past" className="space-y-4">
-            {pastEvents.map((event) => (
-              <Card key={event.id}>
-                <CardContent className="pt-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="text-lg font-semibold mb-1">{event.title}</h3>
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        <Calendar className="h-4 w-4" />
-                        <span>{event.date}</span>
-                      </div>
-                    </div>
-                    <div className="text-right space-y-2">
-                      <Badge variant={event.attended ? "default" : "secondary"}>
-                        {event.attended ? "Attended" : "Did Not Attend"}
-                      </Badge>
-                      {event.attended && (
-                        <div className="text-sm text-muted-foreground">
-                          {event.cpdPoints} CPD Points Earned
-                        </div>
-                      )}
-                    </div>
-                  </div>
+            {pastEvents.length === 0 ? (
+              <Card>
+                <CardContent className="pt-6 text-center py-12">
+                  <p className="text-muted-foreground">No past events.</p>
                 </CardContent>
               </Card>
-            ))}
+            ) : (
+              pastEvents.map((event) => (
+                <Card key={event.id}>
+                  <CardContent className="pt-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="text-lg font-semibold mb-1">{event.title}</h3>
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                          <Calendar className="h-4 w-4" />
+                          <span>{format(new Date(event.event_date), 'MMM dd, yyyy')}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            )}
           </TabsContent>
         </Tabs>
       </div>

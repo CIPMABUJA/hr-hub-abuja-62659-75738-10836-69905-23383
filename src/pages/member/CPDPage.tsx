@@ -3,36 +3,48 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Award, Plus, TrendingUp, Calendar, BookOpen } from "lucide-react";
-
-const cpdActivities = [
-  {
-    id: 1,
-    title: "Leadership in HR Management Workshop",
-    date: "Mar 15, 2024",
-    points: 8,
-    category: "Workshop",
-    status: "Approved",
-  },
-  {
-    id: 2,
-    title: "Annual HR Conference Attendance",
-    date: "Feb 20, 2024",
-    points: 12,
-    category: "Conference",
-    status: "Approved",
-  },
-  {
-    id: 3,
-    title: "HR Analytics & Data-Driven Decision Making",
-    date: "Jan 18, 2024",
-    points: 6,
-    category: "Seminar",
-    status: "Pending",
-  },
-];
+import { Award, Plus, TrendingUp, Calendar, BookOpen, Loader2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { format } from "date-fns";
 
 export default function CPDPage() {
+  const { user } = useAuth();
+  const [cpdActivities, setCpdActivities] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [totalPoints, setTotalPoints] = useState(0);
+
+  useEffect(() => {
+    if (user) {
+      fetchCPDRecords();
+    }
+  }, [user]);
+
+  const fetchCPDRecords = async () => {
+    if (!user) return;
+
+    setIsLoading(true);
+    const currentYear = new Date().getFullYear();
+    const { data, error } = await supabase
+      .from('cpd_records')
+      .select('*')
+      .eq('user_id', user.id)
+      .gte('date', `${currentYear}-01-01`)
+      .order('date', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching CPD records:', error);
+    } else {
+      setCpdActivities(data || []);
+      const total = data?.reduce((sum, record) => sum + Number(record.hours || 0), 0) || 0;
+      setTotalPoints(total);
+    }
+    setIsLoading(false);
+  };
+
+  const progress = Math.min(100, (totalPoints / 40) * 100);
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -51,13 +63,13 @@ export default function CPDPage() {
         <div className="grid md:grid-cols-3 gap-6">
           <Card className="border-primary">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total CPD Points (2024)</CardTitle>
+              <CardTitle className="text-sm font-medium">Total CPD Points (2025)</CardTitle>
               <Award className="h-4 w-4 text-primary" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-primary">26</div>
+              <div className="text-3xl font-bold text-primary">{totalPoints}</div>
               <p className="text-xs text-muted-foreground mt-1">of 40 required points</p>
-              <Progress value={65} className="mt-3 h-2" />
+              <Progress value={progress} className="mt-3 h-2" />
             </CardContent>
           </Card>
 
@@ -67,10 +79,10 @@ export default function CPDPage() {
               <BookOpen className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">8</div>
+              <div className="text-3xl font-bold">{cpdActivities.length}</div>
               <p className="text-xs text-muted-foreground mt-1">
                 <TrendingUp className="inline h-3 w-3 mr-1" />
-                3 this quarter
+                This year
               </p>
             </CardContent>
           </Card>
@@ -81,54 +93,11 @@ export default function CPDPage() {
               <Calendar className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-xl font-bold">Dec 31, 2024</div>
-              <p className="text-xs text-muted-foreground mt-1">14 points remaining</p>
+              <div className="text-xl font-bold">Dec 31, 2025</div>
+              <p className="text-xs text-muted-foreground mt-1">{Math.max(0, 40 - totalPoints)} points remaining</p>
             </CardContent>
           </Card>
         </div>
-
-        {/* CPD Requirements */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Annual CPD Requirements</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium">Professional Workshops</p>
-                  <p className="text-sm text-muted-foreground">Minimum 15 points</p>
-                </div>
-                <div className="text-right">
-                  <Badge variant="default">16 points earned</Badge>
-                </div>
-              </div>
-              <Progress value={100} className="h-2" />
-
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium">Conferences & Seminars</p>
-                  <p className="text-sm text-muted-foreground">Minimum 10 points</p>
-                </div>
-                <div className="text-right">
-                  <Badge variant="secondary">10 points earned</Badge>
-                </div>
-              </div>
-              <Progress value={100} className="h-2" />
-
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium">Self-Directed Learning</p>
-                  <p className="text-sm text-muted-foreground">Minimum 15 points</p>
-                </div>
-                <div className="text-right">
-                  <Badge variant="outline">0 points earned</Badge>
-                </div>
-              </div>
-              <Progress value={0} className="h-2" />
-            </div>
-          </CardContent>
-        </Card>
 
         {/* Recent CPD Activities */}
         <Card>
@@ -136,29 +105,37 @@ export default function CPDPage() {
             <CardTitle>Recent CPD Activities</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {cpdActivities.map((activity) => (
-                <div key={activity.id} className="flex items-start justify-between border-b pb-4 last:border-0 last:pb-0">
-                  <div className="flex-1">
-                    <h4 className="font-semibold mb-1">{activity.title}</h4>
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <Calendar className="h-4 w-4" />
-                        {activity.date}
-                      </span>
-                      <Badge variant="outline">{activity.category}</Badge>
+            {isLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              </div>
+            ) : cpdActivities.length === 0 ? (
+              <p className="text-center text-muted-foreground py-8">No CPD activities logged yet.</p>
+            ) : (
+              <div className="space-y-4">
+                {cpdActivities.map((activity) => (
+                  <div key={activity.id} className="flex items-start justify-between border-b pb-4 last:border-0 last:pb-0">
+                    <div className="flex-1">
+                      <h4 className="font-semibold mb-1">{activity.title}</h4>
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                        <span className="flex items-center gap-1">
+                          <Calendar className="h-4 w-4" />
+                          {format(new Date(activity.date), 'MMM dd, yyyy')}
+                        </span>
+                        {activity.category && <Badge variant="outline">{activity.category}</Badge>}
+                      </div>
+                      {activity.description && (
+                        <p className="text-sm text-muted-foreground mt-2">{activity.description}</p>
+                      )}
+                    </div>
+                    <div className="text-right">
+                      <div className="text-2xl font-bold text-primary">{activity.hours}</div>
+                      <p className="text-xs text-muted-foreground">points</p>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <div className="text-2xl font-bold text-primary">{activity.points}</div>
-                    <p className="text-xs text-muted-foreground">points</p>
-                    <Badge variant={activity.status === "Approved" ? "default" : "secondary"} className="mt-2">
-                      {activity.status}
-                    </Badge>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
 
