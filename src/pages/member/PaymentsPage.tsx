@@ -11,6 +11,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Download, CreditCard, FileText } from "lucide-react";
+import { PaystackPayment } from "@/components/PaystackPayment";
+import { useAuth } from "@/hooks/useAuth";
 
 const paymentHistory = [
   {
@@ -44,6 +46,8 @@ const paymentHistory = [
 ];
 
 export default function PaymentsPage() {
+  const { user } = useAuth();
+  
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -88,23 +92,22 @@ export default function PaymentsPage() {
           </Card>
         </div>
 
-        {/* Payment Method */}
+        {/* Quick Payment */}
         <Card>
           <CardHeader>
-            <CardTitle>Payment Method</CardTitle>
+            <CardTitle>Make a Payment</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="h-12 w-16 bg-muted rounded flex items-center justify-center">
-                  <CreditCard className="h-6 w-6 text-muted-foreground" />
-                </div>
-                <div>
-                  <p className="font-medium">Bank Transfer</p>
-                  <p className="text-sm text-muted-foreground">Primary payment method</p>
-                </div>
-              </div>
-              <Button variant="outline">Update Method</Button>
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">Pay for membership renewal or event registration</p>
+              {user?.email && (
+                <PaystackPayment
+                  email={user.email}
+                  amount={45000}
+                  description="Membership Renewal"
+                  paymentType="membership"
+                />
+              )}
             </div>
           </CardContent>
         </Card>
