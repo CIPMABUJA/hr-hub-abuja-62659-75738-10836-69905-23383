@@ -17,37 +17,6 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 
-const paymentHistory = [
-  {
-    id: "INV-2024-001",
-    date: "Jan 15, 2024",
-    description: "Annual Membership Renewal",
-    amount: "₦45,000",
-    status: "Paid",
-  },
-  {
-    id: "INV-2023-012",
-    date: "Nov 10, 2023",
-    description: "CPD Workshop - Leadership Skills",
-    amount: "₦15,000",
-    status: "Paid",
-  },
-  {
-    id: "INV-2023-008",
-    date: "Aug 20, 2023",
-    description: "Annual Conference Registration",
-    amount: "₦25,000",
-    status: "Paid",
-  },
-  {
-    id: "INV-2023-005",
-    date: "May 05, 2023",
-    description: "Professional Development Course",
-    amount: "₦20,000",
-    status: "Paid",
-  },
-];
-
 export default function PaymentsPage() {
   const { user } = useAuth();
   const [payments, setPayments] = useState<any[]>([]);

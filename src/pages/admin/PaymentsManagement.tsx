@@ -20,64 +20,76 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Download, Eye, CreditCard, TrendingUp, DollarSign } from "lucide-react";
-
-const payments = [
-  {
-    id: 1,
-    invoiceId: "INV-2024-001",
-    member: "John Doe",
-    memberId: "CIPM/ABJ/2024/0123",
-    description: "Annual Membership Renewal",
-    amount: "₦45,000",
-    status: "Paid",
-    date: "May 10, 2024",
-    method: "Bank Transfer",
-  },
-  {
-    id: 2,
-    invoiceId: "INV-2024-002",
-    member: "Jane Smith",
-    memberId: "CIPM/ABJ/2024/0089",
-    description: "Event Registration - HR Summit",
-    amount: "₦25,000",
-    status: "Paid",
-    date: "May 09, 2024",
-    method: "Card",
-  },
-  {
-    id: 3,
-    invoiceId: "INV-2024-003",
-    member: "Michael Chen",
-    memberId: "CIPM/ABJ/2023/0456",
-    description: "CPD Workshop Fee",
-    amount: "₦15,000",
-    status: "Pending",
-    date: "May 08, 2024",
-    method: "Bank Transfer",
-  },
-  {
-    id: 4,
-    invoiceId: "INV-2024-004",
-    member: "Sarah Johnson",
-    memberId: "CIPM/ABJ/2024/0078",
-    description: "Membership Application Fee",
-    amount: "₦10,000",
-    status: "Failed",
-    date: "May 07, 2024",
-    method: "Card",
-  },
-];
+import { Search, Download, Eye, CreditCard, TrendingUp, DollarSign, Loader2 } from "lucide-react";
+import { useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { format } from "date-fns";
 
 export default function PaymentsManagement() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [payments, setPayments] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [stats, setStats] = useState({
+    revenue: 0,
+    paid: 0,
+    pending: 0,
+    failed: 0,
+  });
+
+  useEffect(() => {
+    fetchPayments();
+    fetchStats();
+  }, []);
+
+  const fetchPayments = async () => {
+    setIsLoading(true);
+    const { data, error } = await supabase
+      .from('payments')
+      .select(`
+        *,
+        profiles:user_id (
+          first_name,
+          last_name,
+          email
+        ),
+        memberships:user_id (
+          member_id
+        )
+      `)
+      .order('payment_date', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching payments:', error);
+    } else {
+      setPayments(data || []);
+    }
+    setIsLoading(false);
+  };
+
+  const fetchStats = async () => {
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+
+    const { data: monthlyData } = await supabase
+      .from('payments')
+      .select('amount, status')
+      .gte('payment_date', startOfMonth.toISOString());
+
+    const revenue = monthlyData?.reduce((sum, p) => sum + Number(p.amount), 0) || 0;
+    const paid = monthlyData?.filter(p => p.status === 'completed').reduce((sum, p) => sum + Number(p.amount), 0) || 0;
+    const pending = monthlyData?.filter(p => p.status === 'pending').reduce((sum, p) => sum + Number(p.amount), 0) || 0;
+    const failed = monthlyData?.filter(p => p.status === 'failed').reduce((sum, p) => sum + Number(p.amount), 0) || 0;
+
+    setStats({ revenue, paid, pending, failed });
+  };
 
   const filteredPayments = payments.filter(payment => {
-    const matchesSearch = payment.member.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         payment.invoiceId.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         payment.memberId.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = statusFilter === "all" || payment.status.toLowerCase() === statusFilter.toLowerCase();
+    const fullName = `${payment.profiles?.first_name} ${payment.profiles?.last_name}`;
+    const matchesSearch = fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         payment.reference?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         payment.memberships?.[0]?.member_id?.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesStatus = statusFilter === "all" || payment.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
@@ -103,11 +115,8 @@ export default function PaymentsManagement() {
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">₦2,450,000</div>
-              <p className="text-xs text-muted-foreground">
-                <TrendingUp className="inline h-3 w-3 mr-1" />
-                +12% from last month
-              </p>
+              <div className="text-2xl font-bold">₦{stats.revenue.toLocaleString()}</div>
+              <p className="text-xs text-muted-foreground">This month</p>
             </CardContent>
           </Card>
 
@@ -117,8 +126,8 @@ export default function PaymentsManagement() {
               <CreditCard className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-600">₦2,100,000</div>
-              <p className="text-xs text-muted-foreground">156 transactions</p>
+              <div className="text-2xl font-bold text-green-600">₦{stats.paid.toLocaleString()}</div>
+              <p className="text-xs text-muted-foreground">Completed</p>
             </CardContent>
           </Card>
 
@@ -128,8 +137,8 @@ export default function PaymentsManagement() {
               <CreditCard className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-yellow-600">₦320,000</div>
-              <p className="text-xs text-muted-foreground">23 transactions</p>
+              <div className="text-2xl font-bold text-yellow-600">₦{stats.pending.toLocaleString()}</div>
+              <p className="text-xs text-muted-foreground">Awaiting payment</p>
             </CardContent>
           </Card>
 
@@ -139,8 +148,8 @@ export default function PaymentsManagement() {
               <CreditCard className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-red-600">₦30,000</div>
-              <p className="text-xs text-muted-foreground">5 transactions</p>
+              <div className="text-2xl font-bold text-red-600">₦{stats.failed.toLocaleString()}</div>
+              <p className="text-xs text-muted-foreground">Failed transactions</p>
             </CardContent>
           </Card>
         </div>
@@ -182,60 +191,72 @@ export default function PaymentsManagement() {
                   </Select>
                 </div>
 
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Invoice ID</TableHead>
-                      <TableHead>Member</TableHead>
-                      <TableHead>Description</TableHead>
-                      <TableHead>Amount</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Method</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredPayments.map((payment) => (
-                      <TableRow key={payment.id}>
-                        <TableCell className="font-mono text-sm">{payment.invoiceId}</TableCell>
-                        <TableCell>
-                          <div>
-                            <p className="font-medium">{payment.member}</p>
-                            <p className="text-xs text-muted-foreground">{payment.memberId}</p>
-                          </div>
-                        </TableCell>
-                        <TableCell>{payment.description}</TableCell>
-                        <TableCell className="font-semibold">{payment.amount}</TableCell>
-                        <TableCell>
-                          <Badge
-                            variant={
-                              payment.status === "Paid"
-                                ? "default"
-                                : payment.status === "Pending"
-                                ? "secondary"
-                                : "destructive"
-                            }
-                          >
-                            {payment.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>{payment.date}</TableCell>
-                        <TableCell>{payment.method}</TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-2">
-                            <Button variant="ghost" size="icon">
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="icon">
-                              <Download className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
+                {isLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  </div>
+                ) : filteredPayments.length === 0 ? (
+                  <p className="text-center text-muted-foreground py-8">No payments found</p>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Reference</TableHead>
+                        <TableHead>Member</TableHead>
+                        <TableHead>Description</TableHead>
+                        <TableHead>Amount</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Method</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredPayments.map((payment) => (
+                        <TableRow key={payment.id}>
+                          <TableCell className="font-mono text-sm">{payment.reference || 'N/A'}</TableCell>
+                          <TableCell>
+                            <div>
+                              <p className="font-medium">
+                                {payment.profiles?.first_name} {payment.profiles?.last_name}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {payment.memberships?.[0]?.member_id || 'N/A'}
+                              </p>
+                            </div>
+                          </TableCell>
+                          <TableCell>{payment.description}</TableCell>
+                          <TableCell className="font-semibold">₦{Number(payment.amount).toLocaleString()}</TableCell>
+                          <TableCell>
+                            <Badge
+                              variant={
+                                payment.status === "completed"
+                                  ? "default"
+                                  : payment.status === "pending"
+                                  ? "secondary"
+                                  : "destructive"
+                              }
+                            >
+                              {payment.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>{format(new Date(payment.payment_date), 'MMM dd, yyyy')}</TableCell>
+                          <TableCell>{payment.payment_method || 'N/A'}</TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex justify-end gap-2">
+                              <Button variant="ghost" size="icon">
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                              <Button variant="ghost" size="icon">
+                                <Download className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
               </CardContent>
             </Card>
           </TabsContent>

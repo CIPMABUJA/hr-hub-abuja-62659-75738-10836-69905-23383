@@ -27,69 +27,83 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, UserPlus, Edit, Trash2, Eye, Filter } from "lucide-react";
-
-const members = [
-  {
-    id: 1,
-    name: "John Doe",
-    email: "john@example.com",
-    memberId: "CIPM/ABJ/2024/0123",
-    category: "Associate",
-    status: "Active",
-    joinDate: "Jan 15, 2024",
-    expiryDate: "Dec 31, 2024",
-  },
-  {
-    id: 2,
-    name: "Jane Smith",
-    email: "jane@example.com",
-    memberId: "CIPM/ABJ/2024/0089",
-    category: "Full Member",
-    status: "Active",
-    joinDate: "Mar 10, 2024",
-    expiryDate: "Dec 31, 2024",
-  },
-  {
-    id: 3,
-    name: "Michael Chen",
-    email: "michael@example.com",
-    memberId: "CIPM/ABJ/2023/0456",
-    category: "Fellow",
-    status: "Active",
-    joinDate: "Aug 20, 2023",
-    expiryDate: "Dec 31, 2024",
-  },
-  {
-    id: 4,
-    name: "Sarah Johnson",
-    email: "sarah@example.com",
-    memberId: "CIPM/ABJ/2024/0078",
-    category: "Student",
-    status: "Pending",
-    joinDate: "May 05, 2024",
-    expiryDate: "-",
-  },
-  {
-    id: 5,
-    name: "David Okafor",
-    email: "david@example.com",
-    memberId: "CIPM/ABJ/2022/0234",
-    category: "Associate",
-    status: "Expired",
-    joinDate: "Feb 15, 2022",
-    expiryDate: "Dec 31, 2023",
-  },
-];
+import { Search, UserPlus, Edit, Trash2, Eye, Filter, Loader2 } from "lucide-react";
+import { useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { format } from "date-fns";
 
 export default function MembersManagement() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [members, setMembers] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [stats, setStats] = useState({
+    total: 0,
+    active: 0,
+    pending: 0,
+    expired: 0,
+  });
+
+  useEffect(() => {
+    fetchMembers();
+    fetchStats();
+  }, []);
+
+  const fetchMembers = async () => {
+    setIsLoading(true);
+    const { data, error } = await supabase
+      .from('memberships')
+      .select(`
+        *,
+        profiles:user_id (
+          first_name,
+          last_name,
+          email
+        )
+      `)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching members:', error);
+    } else {
+      setMembers(data || []);
+    }
+    setIsLoading(false);
+  };
+
+  const fetchStats = async () => {
+    const { count: total } = await supabase
+      .from('memberships')
+      .select('*', { count: 'exact', head: true });
+
+    const { count: active } = await supabase
+      .from('memberships')
+      .select('*', { count: 'exact', head: true })
+      .eq('status', 'active');
+
+    const { count: pending } = await supabase
+      .from('memberships')
+      .select('*', { count: 'exact', head: true })
+      .eq('status', 'pending');
+
+    const { count: expired } = await supabase
+      .from('memberships')
+      .select('*', { count: 'exact', head: true })
+      .eq('status', 'expired');
+
+    setStats({
+      total: total || 0,
+      active: active || 0,
+      pending: pending || 0,
+      expired: expired || 0,
+    });
+  };
 
   const filteredMembers = members.filter(member => {
-    const matchesSearch = member.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         member.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         member.memberId.toLowerCase().includes(searchQuery.toLowerCase());
+    const fullName = `${member.profiles?.first_name} ${member.profiles?.last_name}`;
+    const matchesSearch = fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         member.profiles?.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         member.member_id.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === "all" || member.status.toLowerCase() === statusFilter.toLowerCase();
     return matchesSearch && matchesStatus;
   });
@@ -142,7 +156,7 @@ export default function MembersManagement() {
               <CardTitle className="text-sm font-medium">Total Members</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">487</div>
+              <div className="text-2xl font-bold">{stats.total}</div>
             </CardContent>
           </Card>
           <Card>
@@ -150,7 +164,7 @@ export default function MembersManagement() {
               <CardTitle className="text-sm font-medium">Active</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-600">412</div>
+              <div className="text-2xl font-bold text-green-600">{stats.active}</div>
             </CardContent>
           </Card>
           <Card>
@@ -158,7 +172,7 @@ export default function MembersManagement() {
               <CardTitle className="text-sm font-medium">Pending</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-yellow-600">23</div>
+              <div className="text-2xl font-bold text-yellow-600">{stats.pending}</div>
             </CardContent>
           </Card>
           <Card>
@@ -166,7 +180,7 @@ export default function MembersManagement() {
               <CardTitle className="text-sm font-medium">Expired</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-red-600">52</div>
+              <div className="text-2xl font-bold text-red-600">{stats.expired}</div>
             </CardContent>
           </Card>
         </div>
@@ -202,58 +216,68 @@ export default function MembersManagement() {
             </div>
 
             {/* Members Table */}
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Member ID</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Join Date</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredMembers.map((member) => (
-                  <TableRow key={member.id}>
-                    <TableCell className="font-medium">{member.name}</TableCell>
-                    <TableCell>{member.email}</TableCell>
-                    <TableCell className="font-mono text-sm">{member.memberId}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{member.category}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={
-                          member.status === "Active"
-                            ? "default"
-                            : member.status === "Pending"
-                            ? "secondary"
-                            : "destructive"
-                        }
-                      >
-                        {member.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{member.joinDate}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button variant="ghost" size="icon">
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon">
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </div>
-                    </TableCell>
+            {isLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : filteredMembers.length === 0 ? (
+              <p className="text-center text-muted-foreground py-8">No members found</p>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Member ID</TableHead>
+                    <TableHead>Category</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Join Date</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {filteredMembers.map((member) => (
+                    <TableRow key={member.id}>
+                      <TableCell className="font-medium">
+                        {member.profiles?.first_name} {member.profiles?.last_name}
+                      </TableCell>
+                      <TableCell>{member.profiles?.email}</TableCell>
+                      <TableCell className="font-mono text-sm">{member.member_id}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline">{member.category}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={
+                            member.status === "active"
+                              ? "default"
+                              : member.status === "pending"
+                              ? "secondary"
+                              : "destructive"
+                          }
+                        >
+                          {member.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>{format(new Date(member.join_date), 'MMM dd, yyyy')}</TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button variant="ghost" size="icon">
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon">
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon">
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
           </CardContent>
         </Card>
       </div>

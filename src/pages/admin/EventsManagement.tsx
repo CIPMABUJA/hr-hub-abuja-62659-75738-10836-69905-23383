@@ -20,64 +20,75 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Calendar, Plus, Edit, Trash2, Users, MapPin, Clock } from "lucide-react";
-
-const events = [
-  {
-    id: 1,
-    title: "HR Technology & Innovation Summit 2024",
-    date: "May 15, 2024",
-    time: "9:00 AM - 5:00 PM",
-    location: "Transcorp Hilton, Abuja",
-    type: "Conference",
-    registrations: 45,
-    capacity: 250,
-    status: "Upcoming",
-    cpdPoints: 12,
-  },
-  {
-    id: 2,
-    title: "Employee Engagement Workshop",
-    date: "May 22, 2024",
-    time: "2:00 PM - 5:00 PM",
-    location: "CIPM Secretariat, Abuja",
-    type: "Workshop",
-    registrations: 30,
-    capacity: 50,
-    status: "Upcoming",
-    cpdPoints: 6,
-  },
-  {
-    id: 3,
-    title: "Compensation & Benefits Seminar",
-    date: "June 5, 2024",
-    time: "10:00 AM - 1:00 PM",
-    location: "Virtual (Zoom)",
-    type: "Seminar",
-    registrations: 25,
-    capacity: 100,
-    status: "Upcoming",
-    cpdPoints: 4,
-  },
-  {
-    id: 4,
-    title: "Leadership in HR Management",
-    date: "March 15, 2024",
-    time: "9:00 AM - 4:00 PM",
-    location: "CIPM Secretariat, Abuja",
-    type: "Workshop",
-    registrations: 48,
-    capacity: 50,
-    status: "Completed",
-    cpdPoints: 8,
-  },
-];
+import { Calendar, Plus, Edit, Trash2, Users, MapPin, Clock, Loader2 } from "lucide-react";
+import { useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { format } from "date-fns";
 
 export default function EventsManagement() {
   const [statusFilter, setStatusFilter] = useState("all");
+  const [events, setEvents] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [stats, setStats] = useState({
+    total: 0,
+    upcoming: 0,
+    registrations: 0,
+    revenue: 0,
+  });
+
+  useEffect(() => {
+    fetchEvents();
+    fetchStats();
+  }, []);
+
+  const fetchEvents = async () => {
+    setIsLoading(true);
+    const { data, error } = await supabase
+      .from('events')
+      .select(`
+        *,
+        event_registrations (count)
+      `)
+      .order('event_date', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching events:', error);
+    } else {
+      setEvents(data || []);
+    }
+    setIsLoading(false);
+  };
+
+  const fetchStats = async () => {
+    const { count: total } = await supabase
+      .from('events')
+      .select('*', { count: 'exact', head: true });
+
+    const { count: upcoming } = await supabase
+      .from('events')
+      .select('*', { count: 'exact', head: true })
+      .eq('status', 'upcoming');
+
+    const { count: registrations } = await supabase
+      .from('event_registrations')
+      .select('*', { count: 'exact', head: true });
+
+    const { data: eventsData } = await supabase
+      .from('events')
+      .select('price');
+    
+    const revenue = eventsData?.reduce((sum, e) => sum + Number(e.price || 0), 0) || 0;
+
+    setStats({
+      total: total || 0,
+      upcoming: upcoming || 0,
+      registrations: registrations || 0,
+      revenue: revenue,
+    });
+  };
 
   const filteredEvents = events.filter(event => 
-    statusFilter === "all" || event.status.toLowerCase() === statusFilter.toLowerCase()
+    statusFilter === "all" || event.status === statusFilter
   );
 
   return (
@@ -137,7 +148,7 @@ export default function EventsManagement() {
               <CardTitle className="text-sm font-medium">Total Events</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">24</div>
+              <div className="text-2xl font-bold">{stats.total}</div>
               <p className="text-xs text-muted-foreground">All time</p>
             </CardContent>
           </Card>
@@ -146,8 +157,8 @@ export default function EventsManagement() {
               <CardTitle className="text-sm font-medium">Upcoming</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-blue-600">8</div>
-              <p className="text-xs text-muted-foreground">Next 3 months</p>
+              <div className="text-2xl font-bold text-blue-600">{stats.upcoming}</div>
+              <p className="text-xs text-muted-foreground">Scheduled</p>
             </CardContent>
           </Card>
           <Card>
@@ -155,16 +166,16 @@ export default function EventsManagement() {
               <CardTitle className="text-sm font-medium">Total Registrations</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">342</div>
-              <p className="text-xs text-muted-foreground">This year</p>
+              <div className="text-2xl font-bold">{stats.registrations}</div>
+              <p className="text-xs text-muted-foreground">All events</p>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Revenue (YTD)</CardTitle>
+              <CardTitle className="text-sm font-medium">Revenue (Total)</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">₦4.2M</div>
+              <div className="text-2xl font-bold">₦{stats.revenue.toLocaleString()}</div>
               <p className="text-xs text-muted-foreground">From events</p>
             </CardContent>
           </Card>
@@ -186,72 +197,85 @@ export default function EventsManagement() {
         </div>
 
         {/* Events List */}
-        <div className="grid gap-6">
-          {filteredEvents.map((event) => (
-            <Card key={event.id}>
-              <CardContent className="pt-6">
-                <div className="flex flex-col lg:flex-row gap-6">
-                  <div className="flex-1 space-y-3">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <h3 className="text-xl font-bold mb-2">{event.title}</h3>
-                        <div className="flex flex-wrap gap-2">
-                          <Badge variant="outline">{event.type}</Badge>
-                          <Badge variant={event.status === "Upcoming" ? "default" : "secondary"}>
-                            {event.status}
-                          </Badge>
-                          <Badge variant="secondary">{event.cpdPoints} CPD Points</Badge>
+        {isLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        ) : filteredEvents.length === 0 ? (
+          <Card>
+            <CardContent className="pt-6 text-center py-12">
+              <p className="text-muted-foreground">No events found</p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid gap-6">
+            {filteredEvents.map((event) => {
+              const registrationCount = event.event_registrations?.[0]?.count || 0;
+              const capacity = event.capacity || 0;
+              
+              return (
+                <Card key={event.id}>
+                  <CardContent className="pt-6">
+                    <div className="flex flex-col lg:flex-row gap-6">
+                      <div className="flex-1 space-y-3">
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <h3 className="text-xl font-bold mb-2">{event.title}</h3>
+                            <div className="flex flex-wrap gap-2">
+                              <Badge variant={event.status === "upcoming" ? "default" : "secondary"}>
+                                {event.status}
+                              </Badge>
+                            </div>
+                          </div>
                         </div>
+
+                        <div className="grid md:grid-cols-2 gap-3">
+                          <div className="flex items-center gap-2 text-muted-foreground">
+                            <Calendar className="h-4 w-4" />
+                            <span className="text-sm">{format(new Date(event.event_date), 'MMM dd, yyyy')}</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-muted-foreground">
+                            <MapPin className="h-4 w-4" />
+                            <span className="text-sm">{event.location || event.venue || 'TBA'}</span>
+                          </div>
+                        </div>
+
+                        {capacity > 0 && (
+                          <div className="flex items-center gap-2">
+                            <Users className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-sm text-muted-foreground">
+                              {registrationCount} / {capacity} registered
+                            </span>
+                            <div className="flex-1 bg-muted rounded-full h-2 ml-2">
+                              <div 
+                                className="bg-primary h-2 rounded-full" 
+                                style={{ width: `${Math.min(100, (registrationCount / capacity) * 100)}%` }}
+                              />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="flex lg:flex-col gap-2 justify-end">
+                        <Button variant="outline" size="sm" className="flex-1 lg:flex-none">
+                          View Details
+                        </Button>
+                        <Button variant="outline" size="sm" className="flex-1 lg:flex-none">
+                          <Edit className="mr-2 h-4 w-4" />
+                          Edit
+                        </Button>
+                        <Button variant="outline" size="sm" className="flex-1 lg:flex-none text-destructive">
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Delete
+                        </Button>
                       </div>
                     </div>
-
-                    <div className="grid md:grid-cols-3 gap-3">
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        <Calendar className="h-4 w-4" />
-                        <span className="text-sm">{event.date}</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        <Clock className="h-4 w-4" />
-                        <span className="text-sm">{event.time}</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        <MapPin className="h-4 w-4" />
-                        <span className="text-sm">{event.location}</span>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <Users className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm text-muted-foreground">
-                        {event.registrations} / {event.capacity} registered
-                      </span>
-                      <div className="flex-1 bg-muted rounded-full h-2 ml-2">
-                        <div 
-                          className="bg-primary h-2 rounded-full" 
-                          style={{ width: `${(event.registrations / event.capacity) * 100}%` }}
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex lg:flex-col gap-2 justify-end">
-                    <Button variant="outline" size="sm" className="flex-1 lg:flex-none">
-                      View Details
-                    </Button>
-                    <Button variant="outline" size="sm" className="flex-1 lg:flex-none">
-                      <Edit className="mr-2 h-4 w-4" />
-                      Edit
-                    </Button>
-                    <Button variant="outline" size="sm" className="flex-1 lg:flex-none text-destructive">
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      Delete
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        )}
       </div>
     </DashboardLayout>
   );
