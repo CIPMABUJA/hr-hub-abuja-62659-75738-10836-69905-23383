@@ -14,6 +14,90 @@ export type Database = {
   }
   public: {
     Tables: {
+      applications: {
+        Row: {
+          address: string | null
+          cipm_member_id: string | null
+          city: string | null
+          created_at: string | null
+          current_employer: string | null
+          document_url: string | null
+          education: string | null
+          email: string
+          first_name: string
+          graduation_year: number | null
+          id: string
+          institution: string | null
+          job_title: string | null
+          last_name: string
+          membership_category: Database["public"]["Enums"]["membership_category"]
+          notes: string | null
+          phone: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          state: string | null
+          status: string | null
+          submitted_at: string | null
+          updated_at: string | null
+          user_id: string | null
+          years_experience: number | null
+        }
+        Insert: {
+          address?: string | null
+          cipm_member_id?: string | null
+          city?: string | null
+          created_at?: string | null
+          current_employer?: string | null
+          document_url?: string | null
+          education?: string | null
+          email: string
+          first_name: string
+          graduation_year?: number | null
+          id?: string
+          institution?: string | null
+          job_title?: string | null
+          last_name: string
+          membership_category: Database["public"]["Enums"]["membership_category"]
+          notes?: string | null
+          phone: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          state?: string | null
+          status?: string | null
+          submitted_at?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          years_experience?: number | null
+        }
+        Update: {
+          address?: string | null
+          cipm_member_id?: string | null
+          city?: string | null
+          created_at?: string | null
+          current_employer?: string | null
+          document_url?: string | null
+          education?: string | null
+          email?: string
+          first_name?: string
+          graduation_year?: number | null
+          id?: string
+          institution?: string | null
+          job_title?: string | null
+          last_name?: string
+          membership_category?: Database["public"]["Enums"]["membership_category"]
+          notes?: string | null
+          phone?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          state?: string | null
+          status?: string | null
+          submitted_at?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          years_experience?: number | null
+        }
+        Relationships: []
+      }
       cpd_records: {
         Row: {
           category: string | null
@@ -237,6 +321,45 @@ export type Database = {
           status?: Database["public"]["Enums"]["membership_status"]
           updated_at?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      news: {
+        Row: {
+          author_id: string | null
+          content: string
+          created_at: string | null
+          excerpt: string | null
+          id: string
+          image_url: string | null
+          published: boolean | null
+          published_at: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          author_id?: string | null
+          content: string
+          created_at?: string | null
+          excerpt?: string | null
+          id?: string
+          image_url?: string | null
+          published?: boolean | null
+          published_at?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          author_id?: string | null
+          content?: string
+          created_at?: string | null
+          excerpt?: string | null
+          id?: string
+          image_url?: string | null
+          published?: boolean | null
+          published_at?: string | null
+          title?: string
+          updated_at?: string | null
         }
         Relationships: []
       }

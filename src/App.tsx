@@ -31,6 +31,10 @@ import MembersManagement from "./pages/admin/MembersManagement";
 import EventsManagement from "./pages/admin/EventsManagement";
 import PaymentsManagement from "./pages/admin/PaymentsManagement";
 import SettingsPage from "./pages/admin/SettingsPage";
+import ResourcesManagement from "./pages/admin/ResourcesManagement";
+import ForumManagement from "./pages/admin/ForumManagement";
+import NewsManagement from "./pages/admin/NewsManagement";
+import Events from "./pages/Events";
 
 const queryClient = new QueryClient();
 
@@ -47,6 +51,7 @@ const App = () => (
           <Route path="/services" element={<Services />} />
           <Route path="/membership" element={<Membership />} />
           <Route path="/news" element={<News />} />
+          <Route path="/events" element={<Events />} />
           <Route path="/gallery" element={<Gallery />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/login" element={<Login />} />
@@ -72,6 +77,9 @@ const App = () => (
           <Route path="/admin/members" element={<ProtectedRoute requireAdmin><MembersManagement /></ProtectedRoute>} />
           <Route path="/admin/events" element={<ProtectedRoute requireAdmin><EventsManagement /></ProtectedRoute>} />
           <Route path="/admin/payments" element={<ProtectedRoute requireAdmin><PaymentsManagement /></ProtectedRoute>} />
+          <Route path="/admin/resources" element={<ProtectedRoute requireAdmin><ResourcesManagement /></ProtectedRoute>} />
+          <Route path="/admin/forum" element={<ProtectedRoute requireAdmin><ForumManagement /></ProtectedRoute>} />
+          <Route path="/admin/news" element={<ProtectedRoute requireAdmin><NewsManagement /></ProtectedRoute>} />
           <Route path="/admin/settings" element={<ProtectedRoute requireAdmin><SettingsPage /></ProtectedRoute>} />
           
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

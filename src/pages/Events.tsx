@@ -1,98 +1,36 @@
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Calendar, MapPin, Clock, Users } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import eventsHero from "@/assets/events-hero.jpg";
-
-const events = [
-  {
-    id: 1,
-    title: "HR Summit 2025",
-    date: "March 15, 2025",
-    time: "9:00 AM - 5:00 PM",
-    venue: "Transcorp Hilton, Abuja",
-    description: "Annual gathering of HR professionals across the FCT featuring keynote speakers, panel discussions, and networking opportunities.",
-    capacity: "500 participants",
-    status: "Open for Registration",
-    type: "Conference",
-  },
-  {
-    id: 2,
-    title: "Leadership Masterclass",
-    date: "March 28, 2025",
-    time: "2:00 PM - 6:00 PM",
-    venue: "CIPM Office, Wuse Zone 4",
-    description: "Developing strategic leadership skills for HR practitioners. Focus on emotional intelligence, decision-making, and team building.",
-    capacity: "50 participants",
-    status: "Limited Spaces",
-    type: "Workshop",
-  },
-  {
-    id: 3,
-    title: "CPD Workshop Series",
-    date: "April 5, 2025",
-    time: "10:00 AM - 2:00 PM",
-    venue: "Online via Zoom",
-    description: "Continuous professional development focused on emerging trends in talent management and organizational development.",
-    capacity: "Unlimited",
-    status: "Open for Registration",
-    type: "Webinar",
-  },
-  {
-    id: 4,
-    title: "HR Analytics & Data-Driven Decision Making",
-    date: "April 18, 2025",
-    time: "9:00 AM - 4:00 PM",
-    venue: "Sheraton Hotel, Abuja",
-    description: "Learn how to leverage HR analytics to make informed strategic decisions and measure organizational impact.",
-    capacity: "100 participants",
-    status: "Open for Registration",
-    type: "Training",
-  },
-  {
-    id: 5,
-    title: "Employee Engagement & Retention Strategies",
-    date: "May 10, 2025",
-    time: "1:00 PM - 5:00 PM",
-    venue: "CIPM Office, Wuse Zone 4",
-    description: "Best practices for creating engaging workplace cultures and retaining top talent in competitive markets.",
-    capacity: "60 participants",
-    status: "Open for Registration",
-    type: "Workshop",
-  },
-  {
-    id: 6,
-    title: "Monthly HR Forum",
-    date: "Every Last Friday",
-    time: "4:00 PM - 6:00 PM",
-    venue: "CIPM Office, Wuse Zone 4",
-    description: "Regular meetup for members to discuss current HR challenges, share experiences, and network.",
-    capacity: "40 participants",
-    status: "Ongoing",
-    type: "Forum",
-  },
-];
-
-const pastEvents = [
-  {
-    title: "Annual General Meeting 2024",
-    date: "December 2024",
-    attendees: "350+",
-  },
-  {
-    title: "HR Excellence Awards",
-    date: "November 2024",
-    attendees: "200+",
-  },
-  {
-    title: "Performance Management Workshop",
-    date: "October 2024",
-    attendees: "80+",
-  },
-];
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export default function Events() {
+  const [events, setEvents] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchEvents();
+  }, []);
+
+  const fetchEvents = async () => {
+    const { data, error } = await supabase
+      .from("events")
+      .select("*")
+      .eq("status", "upcoming")
+      .order("event_date", { ascending: true });
+
+    if (error) {
+      toast.error("Failed to load events");
+      return;
+    }
+
+    setEvents(data || []);
+    setLoading(false);
+  };
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
@@ -125,79 +63,59 @@ export default function Events() {
             </div>
 
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
-              {events.map((event) => (
-                <Card key={event.id} className="shadow-medium hover:shadow-strong transition-all duration-300">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="text-xs font-semibold px-3 py-1 bg-primary/10 text-primary rounded-full">
-                        {event.type}
-                      </span>
-                      <span className={`text-xs font-semibold px-3 py-1 rounded-full ${
-                        event.status === "Limited Spaces" 
-                          ? "bg-destructive/10 text-destructive" 
-                          : "bg-secondary/20 text-secondary-foreground"
-                      }`}>
-                        {event.status}
-                      </span>
-                    </div>
-                    
-                    <h3 className="text-xl font-bold mb-3">{event.title}</h3>
-                    
-                    <div className="space-y-2 mb-4">
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Calendar className="h-4 w-4" />
-                        <span>{event.date}</span>
+              {loading ? (
+                <div className="col-span-full text-center py-12 text-muted-foreground">
+                  Loading events...
+                </div>
+              ) : events.length === 0 ? (
+                <div className="col-span-full text-center py-12 text-muted-foreground">
+                  No upcoming events at the moment. Check back soon!
+                </div>
+              ) : (
+                events.map((event) => (
+                  <Card key={event.id} className="shadow-medium hover:shadow-strong transition-all duration-300">
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="text-xs font-semibold px-3 py-1 bg-primary/10 text-primary rounded-full">
+                          Event
+                        </span>
+                        <span className="text-xs font-semibold px-3 py-1 bg-secondary/20 text-secondary-foreground rounded-full">
+                          {event.status}
+                        </span>
                       </div>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Clock className="h-4 w-4" />
-                        <span>{event.time}</span>
+                      
+                      <h3 className="text-xl font-bold mb-3">{event.title}</h3>
+                      
+                      <div className="space-y-2 mb-4">
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <Calendar className="h-4 w-4" />
+                          <span>{new Date(event.event_date).toLocaleDateString()}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <MapPin className="h-4 w-4" />
+                          <span>{event.location || event.venue || "TBA"}</span>
+                        </div>
+                        {event.capacity && (
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Users className="h-4 w-4" />
+                            <span>{event.capacity} participants</span>
+                          </div>
+                        )}
                       </div>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <MapPin className="h-4 w-4" />
-                        <span>{event.venue}</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Users className="h-4 w-4" />
-                        <span>{event.capacity}</span>
-                      </div>
-                    </div>
-                    
-                    <p className="text-sm text-foreground mb-4">{event.description}</p>
-                    
-                    <Button variant="default" className="w-full">
-                      Register Now
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
+                      
+                      <p className="text-sm text-foreground mb-4 line-clamp-3">{event.description}</p>
+                      
+                      <Button variant="default" className="w-full">
+                        Register Now
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
             </div>
           </div>
         </section>
 
-        {/* Past Events */}
-        <section className="py-16 bg-muted">
-          <div className="container mx-auto px-4">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">Recent Events</h2>
-              <p className="text-lg text-muted-foreground">
-                Highlights from our successful programs
-              </p>
-            </div>
-
-            <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-              {pastEvents.map((event, index) => (
-                <Card key={index} className="shadow-soft">
-                  <CardContent className="p-6 text-center">
-                    <h3 className="text-xl font-bold mb-2">{event.title}</h3>
-                    <p className="text-sm text-muted-foreground mb-2">{event.date}</p>
-                    <p className="text-2xl font-bold text-primary">{event.attendees}</p>
-                    <p className="text-sm text-muted-foreground">Attendees</p>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        </section>
 
         {/* CPD Information */}
         <section className="py-16">

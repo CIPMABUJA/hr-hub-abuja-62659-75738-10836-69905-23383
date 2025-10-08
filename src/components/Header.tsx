@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X } from "lucide-react";
+import { Menu, X, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/useAuth";
 import cipmLogo from "@/assets/logo.png";
 const navigation = [{
   name: "Home",
@@ -28,6 +29,7 @@ const navigation = [{
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
+  const { user, signOut, isAdmin } = useAuth();
   const isActive = (path: string) => location.pathname === path;
   return <header className="sticky top-0 z-50 bg-card shadow-soft">
       <nav className="mx-auto flex max-w-7xl items-center justify-between p-4 lg:px-8" aria-label="Global">
@@ -52,12 +54,28 @@ export default function Header() {
             </Link>)}
         </div>
         <div className="hidden lg:flex lg:flex-1 lg:justify-end lg:gap-x-2">
-          <Button variant="outline" size="sm" asChild>
-            <Link to="/auth/login">Login</Link>
-          </Button>
-          <Button variant="default" size="sm" asChild>
-            <Link to="/member/dashboard">Member Portal</Link>
-          </Button>
+          {user ? (
+            <>
+              <Button variant="outline" size="sm" asChild>
+                <Link to={isAdmin ? "/admin/dashboard" : "/member/dashboard"}>
+                  {isAdmin ? "Admin Portal" : "Member Portal"}
+                </Link>
+              </Button>
+              <Button variant="destructive" size="sm" onClick={signOut}>
+                <LogOut className="h-4 w-4 mr-2" />
+                Logout
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button variant="outline" size="sm" asChild>
+                <Link to="/auth/login">Login</Link>
+              </Button>
+              <Button variant="default" size="sm" asChild>
+                <Link to="/auth/register">Register</Link>
+              </Button>
+            </>
+          )}
         </div>
       </nav>
 
@@ -68,12 +86,28 @@ export default function Header() {
                 {item.name}
               </Link>)}
             <div className="pt-4 space-y-2">
-              <Button variant="outline" size="sm" className="w-full" asChild>
-                <Link to="/auth/login">Login</Link>
-              </Button>
-              <Button variant="default" size="sm" className="w-full" asChild>
-                <Link to="/member/dashboard">Member Portal</Link>
-              </Button>
+              {user ? (
+                <>
+                  <Button variant="outline" size="sm" className="w-full" asChild>
+                    <Link to={isAdmin ? "/admin/dashboard" : "/member/dashboard"}>
+                      {isAdmin ? "Admin Portal" : "Member Portal"}
+                    </Link>
+                  </Button>
+                  <Button variant="destructive" size="sm" className="w-full" onClick={signOut}>
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Logout
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button variant="outline" size="sm" className="w-full" asChild>
+                    <Link to="/auth/login">Login</Link>
+                  </Button>
+                  <Button variant="default" size="sm" className="w-full" asChild>
+                    <Link to="/auth/register">Register</Link>
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         </div>}
