@@ -5,10 +5,11 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Plus, MessageSquare, Eye, TrendingUp, Loader2 } from "lucide-react";
+import { Search, MessageSquare, Eye, TrendingUp, Loader2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
+import { CreatePostDialog } from "@/components/forum/CreatePostDialog";
 
 export default function ForumPage() {
   const [forumPosts, setForumPosts] = useState<any[]>([]);
@@ -54,10 +55,7 @@ export default function ForumPage() {
             <h2 className="text-3xl font-bold text-foreground">Member Forum</h2>
             <p className="text-muted-foreground">Connect and discuss with fellow HR professionals</p>
           </div>
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            New Discussion
-          </Button>
+          <CreatePostDialog onPostCreated={fetchForumPosts} />
         </div>
 
         {/* Search */}

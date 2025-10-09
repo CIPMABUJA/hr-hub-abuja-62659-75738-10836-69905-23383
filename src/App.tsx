@@ -22,6 +22,7 @@ import MemberDashboard from "./pages/member/MemberDashboard";
 import ProfilePage from "./pages/member/ProfilePage";
 import MembershipPage from "./pages/member/MembershipPage";
 import PaymentsPage from "./pages/member/PaymentsPage";
+import PaymentSuccessPage from "./pages/member/PaymentSuccessPage";
 import CPDPage from "./pages/member/CPDPage";
 import EventsPage from "./pages/member/EventsPage";
 import ResourcesPage from "./pages/member/ResourcesPage";
@@ -67,6 +68,7 @@ const App = () => (
           <Route path="/member/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
           <Route path="/member/membership" element={<ProtectedRoute><MembershipPage /></ProtectedRoute>} />
           <Route path="/member/payments" element={<ProtectedRoute><PaymentsPage /></ProtectedRoute>} />
+          <Route path="/member/payment-success" element={<ProtectedRoute><PaymentSuccessPage /></ProtectedRoute>} />
           <Route path="/member/cpd" element={<ProtectedRoute><CPDPage /></ProtectedRoute>} />
           <Route path="/member/events" element={<ProtectedRoute><EventsPage /></ProtectedRoute>} />
           <Route path="/member/resources" element={<ProtectedRoute><ResourcesPage /></ProtectedRoute>} />

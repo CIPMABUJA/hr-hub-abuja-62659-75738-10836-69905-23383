@@ -3,11 +3,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Award, Plus, TrendingUp, Calendar, BookOpen, Loader2 } from "lucide-react";
+import { Award, TrendingUp, Calendar, BookOpen, Loader2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { format } from "date-fns";
+import { LogCPDDialog } from "@/components/cpd/LogCPDDialog";
 
 export default function CPDPage() {
   const { user } = useAuth();
@@ -53,10 +54,7 @@ export default function CPDPage() {
             <h2 className="text-3xl font-bold text-foreground">CPD Points</h2>
             <p className="text-muted-foreground">Continuous Professional Development tracking</p>
           </div>
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            Log CPD Activity
-          </Button>
+          <LogCPDDialog onCPDLogged={fetchCPDRecords} />
         </div>
 
         {/* CPD Progress Overview */}
