@@ -35,6 +35,7 @@ import SettingsPage from "./pages/admin/SettingsPage";
 import ResourcesManagement from "./pages/admin/ResourcesManagement";
 import ForumManagement from "./pages/admin/ForumManagement";
 import NewsManagement from "./pages/admin/NewsManagement";
+import AnalyticsPage from "./pages/admin/AnalyticsPage";
 import Events from "./pages/Events";
 
 const queryClient = new QueryClient();
@@ -82,6 +83,7 @@ const App = () => (
           <Route path="/admin/resources" element={<ProtectedRoute requireAdmin><ResourcesManagement /></ProtectedRoute>} />
           <Route path="/admin/forum" element={<ProtectedRoute requireAdmin><ForumManagement /></ProtectedRoute>} />
           <Route path="/admin/news" element={<ProtectedRoute requireAdmin><NewsManagement /></ProtectedRoute>} />
+          <Route path="/admin/analytics" element={<ProtectedRoute requireAdmin><AnalyticsPage /></ProtectedRoute>} />
           <Route path="/admin/settings" element={<ProtectedRoute requireAdmin><SettingsPage /></ProtectedRoute>} />
           
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

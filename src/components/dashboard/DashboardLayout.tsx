@@ -23,7 +23,8 @@ import {
   Bell,
   LogOut,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  TrendingUp
 } from "lucide-react";
 import cipmLogo from "@/assets/cipm-logo.png";
 
@@ -56,6 +57,7 @@ export default function DashboardLayout({ children, userRole = "member" }: Dashb
     { icon: BookOpen, label: "Resources", path: "/admin/resources" },
     { icon: MessageSquare, label: "Forum", path: "/admin/forum" },
     { icon: Bell, label: "News", path: "/admin/news" },
+    { icon: TrendingUp, label: "Analytics", path: "/admin/analytics" },
   ];
 
   const navItems = userRole === "admin" ? adminNavItems : memberNavItems;

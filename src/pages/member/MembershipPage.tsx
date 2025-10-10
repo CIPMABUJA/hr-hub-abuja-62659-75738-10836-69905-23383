@@ -6,6 +6,7 @@ import { Progress } from "@/components/ui/progress";
 import { Award, Calendar, CreditCard, Download, RefreshCw, Loader2 } from "lucide-react";
 import { useMembership } from "@/hooks/useMembership";
 import { format } from "date-fns";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function MembershipPage() {
   const { membership, isLoading, daysRemaining, progress } = useMembership();
@@ -141,7 +142,21 @@ export default function MembershipPage() {
                 <RefreshCw className="mr-2 h-4 w-4" />
                 Renew Membership
               </Button>
-              <Button className="w-full justify-start" variant="outline">
+              <Button 
+                className="w-full justify-start" 
+                variant="outline"
+                onClick={async () => {
+                  const { data } = await supabase.functions.invoke('generate-certificate', {
+                    body: { userId: membership.user_id, type: 'membership' }
+                  });
+                  if (data?.certificate) {
+                    const printWindow = window.open('', '', 'width=800,height=600');
+                    printWindow?.document.write(data.certificate);
+                    printWindow?.document.close();
+                    printWindow?.print();
+                  }
+                }}
+              >
                 <Download className="mr-2 h-4 w-4" />
                 Download Membership Certificate
               </Button>
