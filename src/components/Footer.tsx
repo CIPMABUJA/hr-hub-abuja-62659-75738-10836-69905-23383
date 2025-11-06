@@ -18,16 +18,16 @@ export default function Footer() {
               Empowering HR Excellence in the Federal Capital Territory.
             </p>
             <div className="flex space-x-4">
-              <a href="#" className="text-primary-foreground/80 hover:text-secondary transition-colors">
+              <a href="https://facebook.com/cipmabujazone" target="_blank" rel="noopener noreferrer" className="text-primary-foreground/80 hover:text-secondary transition-colors">
                 <Facebook className="h-5 w-5" />
               </a>
-              <a href="#" className="text-primary-foreground/80 hover:text-secondary transition-colors">
+              <a href="https://twitter.com/cipmabuja" target="_blank" rel="noopener noreferrer" className="text-primary-foreground/80 hover:text-secondary transition-colors">
                 <Twitter className="h-5 w-5" />
               </a>
-              <a href="#" className="text-primary-foreground/80 hover:text-secondary transition-colors">
+              <a href="https://linkedin.com/company/cipm-abuja" target="_blank" rel="noopener noreferrer" className="text-primary-foreground/80 hover:text-secondary transition-colors">
                 <Linkedin className="h-5 w-5" />
               </a>
-              <a href="#" className="text-primary-foreground/80 hover:text-secondary transition-colors">
+              <a href="https://instagram.com/cipmabuja" target="_blank" rel="noopener noreferrer" className="text-primary-foreground/80 hover:text-secondary transition-colors">
                 <Instagram className="h-5 w-5" />
               </a>
             </div>

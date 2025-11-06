@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Calendar, ArrowRight } from "lucide-react";
@@ -6,8 +7,10 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { format } from "date-fns";
 
 export default function News() {
+  const navigate = useNavigate();
   const [news, setNews] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -32,6 +35,7 @@ export default function News() {
   };
 
   const featuredArticle = news[0];
+  const latestNews = news.slice(1);
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
@@ -60,18 +64,30 @@ export default function News() {
         ) : featuredArticle && (
           <section className="py-12">
             <div className="container mx-auto px-4">
-              <Card className="max-w-5xl mx-auto shadow-strong">
+              <Card 
+                className="max-w-5xl mx-auto shadow-strong overflow-hidden hover:shadow-xl transition-shadow cursor-pointer"
+                onClick={() => navigate(`/news/${featuredArticle.id}`)}
+              >
+                {featuredArticle.image_url && (
+                  <div className="h-80 overflow-hidden">
+                    <img 
+                      src={featuredArticle.image_url} 
+                      alt={featuredArticle.title}
+                      className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                    />
+                  </div>
+                )}
                 <CardContent className="p-8 md:p-12">
                   <div className="flex items-center gap-4 mb-4">
                     <span className="text-xs font-semibold px-3 py-1 bg-secondary text-secondary-foreground rounded-full">
                       Featured
                     </span>
                   </div>
-                  <h2 className="text-3xl md:text-4xl font-bold mb-4">{featuredArticle.title}</h2>
+                  <h2 className="text-3xl md:text-4xl font-bold mb-4 hover:text-primary transition-colors">{featuredArticle.title}</h2>
                   <div className="flex items-center gap-4 text-sm text-muted-foreground mb-6">
                     <div className="flex items-center gap-2">
                       <Calendar className="h-4 w-4" />
-                      <span>{new Date(featuredArticle.published_at).toLocaleDateString()}</span>
+                      <span>{format(new Date(featuredArticle.published_at), 'MMMM dd, yyyy')}</span>
                     </div>
                   </div>
                   <p className="text-lg text-foreground mb-6">{featuredArticle.excerpt}</p>
@@ -96,19 +112,32 @@ export default function News() {
                 <div className="col-span-full text-center py-12 text-muted-foreground">
                   Loading articles...
                 </div>
-              ) : news.length === 0 ? (
+              ) : latestNews.length === 0 ? (
                 <div className="col-span-full text-center py-12 text-muted-foreground">
                   No news articles available yet.
                 </div>
               ) : (
-                news.slice(1).map((article) => (
-                  <Card key={article.id} className="shadow-medium hover:shadow-strong transition-all duration-300">
+                latestNews.map((article) => (
+                  <Card 
+                    key={article.id} 
+                    className="shadow-medium hover:shadow-strong transition-all duration-300 cursor-pointer overflow-hidden"
+                    onClick={() => navigate(`/news/${article.id}`)}
+                  >
+                    {article.image_url && (
+                      <div className="h-48 overflow-hidden">
+                        <img 
+                          src={article.image_url} 
+                          alt={article.title}
+                          className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                        />
+                      </div>
+                    )}
                     <CardContent className="p-6">
-                      <h3 className="text-xl font-bold mb-2 line-clamp-2">{article.title}</h3>
+                      <h3 className="text-xl font-bold mb-2 line-clamp-2 hover:text-primary transition-colors">{article.title}</h3>
                       
                       <div className="flex items-center gap-2 text-sm text-muted-foreground mb-3">
                         <Calendar className="h-4 w-4" />
-                        <span>{new Date(article.published_at).toLocaleDateString()}</span>
+                        <span>{format(new Date(article.published_at), 'MMM dd, yyyy')}</span>
                       </div>
                       
                       <p className="text-sm text-foreground mb-4 line-clamp-3">{article.excerpt}</p>

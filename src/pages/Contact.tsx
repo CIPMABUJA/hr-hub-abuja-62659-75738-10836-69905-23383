@@ -107,16 +107,16 @@ export default function Contact() {
                 <div className="mt-8">
                   <h3 className="font-semibold mb-4">Connect With Us</h3>
                   <div className="flex gap-3">
-                    <a href="#" className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center text-primary hover:bg-primary hover:text-primary-foreground transition-colors">
+                    <a href="https://facebook.com/cipmabujazone" target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center text-primary hover:bg-primary hover:text-primary-foreground transition-colors">
                       <Facebook className="h-5 w-5" />
                     </a>
-                    <a href="#" className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center text-primary hover:bg-primary hover:text-primary-foreground transition-colors">
+                    <a href="https://twitter.com/cipmabuja" target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center text-primary hover:bg-primary hover:text-primary-foreground transition-colors">
                       <Twitter className="h-5 w-5" />
                     </a>
-                    <a href="#" className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center text-primary hover:bg-primary hover:text-primary-foreground transition-colors">
+                    <a href="https://linkedin.com/company/cipm-abuja" target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center text-primary hover:bg-primary hover:text-primary-foreground transition-colors">
                       <Linkedin className="h-5 w-5" />
                     </a>
-                    <a href="#" className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center text-primary hover:bg-primary hover:text-primary-foreground transition-colors">
+                    <a href="https://instagram.com/cipmabuja" target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center text-primary hover:bg-primary hover:text-primary-foreground transition-colors">
                       <Instagram className="h-5 w-5" />
                     </a>
                   </div>
@@ -198,15 +198,17 @@ export default function Contact() {
             <div className="max-w-6xl mx-auto">
               <h2 className="text-3xl font-bold text-center mb-8">Find Us</h2>
               <Card className="shadow-medium overflow-hidden">
-                <div className="h-96 bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
-                  <div className="text-center">
-                    <MapPin className="h-16 w-16 text-primary mx-auto mb-4" />
-                    <p className="text-lg font-semibold">Interactive Map</p>
-                    <p className="text-sm text-muted-foreground">
-                      Plot 17 Benghazi Street, Wuse Zone 4, Abuja
-                    </p>
-                  </div>
-                </div>
+                <iframe
+                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3939.9824834219596!2d7.491449!3d9.069839!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zOcKwMDQnMTEuNCJOIDfCsDI5JzI5LjIiRQ!5e0!3m2!1sen!2sng!4v1234567890"
+                  width="100%"
+                  height="400"
+                  style={{ border: 0 }}
+                  allowFullScreen
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  title="CIPM Abuja Office Location"
+                  className="w-full h-96"
+                ></iframe>
               </Card>
             </div>
           </div>

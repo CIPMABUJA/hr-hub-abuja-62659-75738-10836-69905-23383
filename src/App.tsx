@@ -37,6 +37,9 @@ import ForumManagement from "./pages/admin/ForumManagement";
 import NewsManagement from "./pages/admin/NewsManagement";
 import AnalyticsPage from "./pages/admin/AnalyticsPage";
 import Events from "./pages/Events";
+import ForumPostDetail from "./pages/member/ForumPostDetail";
+import EventPayment from "./pages/member/EventPayment";
+import NewsArticle from "./pages/NewsArticle";
 
 const queryClient = new QueryClient();
 
@@ -53,6 +56,7 @@ const App = () => (
           <Route path="/services" element={<Services />} />
           <Route path="/membership" element={<Membership />} />
           <Route path="/news" element={<News />} />
+          <Route path="/news/:id" element={<NewsArticle />} />
           <Route path="/events" element={<Events />} />
           <Route path="/gallery" element={<Gallery />} />
           <Route path="/contact" element={<Contact />} />
@@ -72,8 +76,10 @@ const App = () => (
           <Route path="/member/payment-success" element={<ProtectedRoute><PaymentSuccessPage /></ProtectedRoute>} />
           <Route path="/member/cpd" element={<ProtectedRoute><CPDPage /></ProtectedRoute>} />
           <Route path="/member/events" element={<ProtectedRoute><EventsPage /></ProtectedRoute>} />
+          <Route path="/member/events/payment/:eventId" element={<ProtectedRoute><EventPayment /></ProtectedRoute>} />
           <Route path="/member/resources" element={<ProtectedRoute><ResourcesPage /></ProtectedRoute>} />
           <Route path="/member/forum" element={<ProtectedRoute><ForumPage /></ProtectedRoute>} />
+          <Route path="/member/forum/:id" element={<ProtectedRoute><ForumPostDetail /></ProtectedRoute>} />
           
           {/* Admin Portal Routes */}
           <Route path="/admin/dashboard" element={<ProtectedRoute requireAdmin><AdminDashboard /></ProtectedRoute>} />

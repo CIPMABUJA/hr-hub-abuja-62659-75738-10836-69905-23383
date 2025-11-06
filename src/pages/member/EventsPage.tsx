@@ -48,7 +48,7 @@ export default function EventsPage() {
     return registrations.some(reg => reg.event_id === eventId);
   };
 
-  const handleRegister = async (eventId: string) => {
+  const handleRegister = async (eventId: string, eventPrice: number) => {
     if (!user) {
       toast({
         title: "Authentication Required",
@@ -58,28 +58,35 @@ export default function EventsPage() {
       return;
     }
 
-    const { error } = await supabase
-      .from('event_registrations')
-      .insert({
-        user_id: user.id,
-        event_id: eventId,
-      });
+    // If event is free, register directly
+    if (!eventPrice || eventPrice === 0) {
+      const { error } = await supabase
+        .from('event_registrations')
+        .insert({
+          user_id: user.id,
+          event_id: eventId,
+          payment_status: 'completed',
+        });
 
-    if (error) {
+      if (error) {
+        toast({
+          title: "Registration Failed",
+          description: error.message,
+          variant: "destructive",
+        });
+        return;
+      }
+
       toast({
-        title: "Registration Failed",
-        description: error.message,
-        variant: "destructive",
+        title: "Success",
+        description: "Successfully registered for event",
       });
-      return;
+
+      fetchData();
+    } else {
+      // For paid events, redirect to payment
+      window.location.href = `/member/events/payment/${eventId}`;
     }
-
-    toast({
-      title: "Success",
-      description: "Successfully registered for event",
-    });
-
-    fetchData();
   };
 
   const upcomingEvents = events.filter(e => new Date(e.event_date) > new Date());
@@ -155,10 +162,17 @@ export default function EventsPage() {
                       </div>
 
                       <div className="flex flex-col gap-2 md:items-end justify-between">
+                        {event.price > 0 && (
+                          <div className="text-xl font-bold text-primary mb-2">
+                            ₦{event.price.toLocaleString()}
+                          </div>
+                        )}
                         {isRegistered(event.id) ? (
                           <Badge variant="default">Registered</Badge>
                         ) : (
-                          <Button onClick={() => handleRegister(event.id)}>Register Now</Button>
+                          <Button onClick={() => handleRegister(event.id, event.price)}>
+                            {event.price > 0 ? 'Register & Pay' : 'Register Now'}
+                          </Button>
                         )}
                       </div>
                     </div>

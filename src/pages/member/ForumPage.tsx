@@ -7,11 +7,13 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Search, MessageSquare, Eye, TrendingUp, Loader2 } from "lucide-react";
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { CreatePostDialog } from "@/components/forum/CreatePostDialog";
 
 export default function ForumPage() {
+  const navigate = useNavigate();
   const [forumPosts, setForumPosts] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -91,7 +93,11 @@ export default function ForumPage() {
                   </Card>
                 ) : (
                   filteredPosts.map((post) => (
-                    <Card key={post.id} className="hover:shadow-md transition-shadow cursor-pointer">
+                    <Card 
+                      key={post.id} 
+                      className="hover:shadow-md transition-shadow cursor-pointer"
+                      onClick={() => navigate(`/member/forum/${post.id}`)}
+                    >
                       <CardContent className="pt-6">
                         <div className="flex gap-4">
                           <Avatar className="h-10 w-10">
@@ -149,7 +155,11 @@ export default function ForumPage() {
                   </Card>
                 ) : (
                   popularPosts.map((post) => (
-                    <Card key={post.id} className="hover:shadow-md transition-shadow cursor-pointer">
+                    <Card 
+                      key={post.id} 
+                      className="hover:shadow-md transition-shadow cursor-pointer"
+                      onClick={() => navigate(`/member/forum/${post.id}`)}
+                    >
                       <CardContent className="pt-6">
                         <div className="flex gap-4">
                           <Avatar className="h-10 w-10">
