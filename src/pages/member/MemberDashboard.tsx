@@ -238,30 +238,24 @@ export default function MemberDashboard() {
             <CardTitle>Quick Actions</CardTitle>
           </CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Button variant="outline" className="h-auto py-4" asChild>
-              <Link to="/member/membership">
-                <div className="flex flex-col items-center gap-2">
-                  <CheckCircle className="h-6 w-6" />
-                  <span>View Membership</span>
-                </div>
-              </Link>
-            </Button>
-            <Button variant="outline" className="h-auto py-4" asChild>
-              <Link to="/member/events">
-                <div className="flex flex-col items-center gap-2">
-                  <Calendar className="h-6 w-6" />
-                  <span>Browse Events</span>
-                </div>
-              </Link>
-            </Button>
-            <Button variant="outline" className="h-auto py-4" asChild>
-              <Link to="/member/cpd">
-                <div className="flex flex-col items-center gap-2">
-                  <Award className="h-6 w-6" />
-                  <span>Log CPD Activity</span>
-                </div>
-              </Link>
-            </Button>
+            <Link to="/member/membership" className="no-underline">
+              <Button variant="outline" className="w-full h-auto py-4 flex flex-col items-center gap-2">
+                <CheckCircle className="h-6 w-6" />
+                <span>View Membership</span>
+              </Button>
+            </Link>
+            <Link to="/member/events" className="no-underline">
+              <Button variant="outline" className="w-full h-auto py-4 flex flex-col items-center gap-2">
+                <Calendar className="h-6 w-6" />
+                <span>Browse Events</span>
+              </Button>
+            </Link>
+            <Link to="/member/cpd" className="no-underline">
+              <Button variant="outline" className="w-full h-auto py-4 flex flex-col items-center gap-2">
+                <Award className="h-6 w-6" />
+                <span>Log CPD Activity</span>
+              </Button>
+            </Link>
           </CardContent>
         </Card>
       </div>
