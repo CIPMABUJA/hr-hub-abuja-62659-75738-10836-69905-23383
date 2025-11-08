@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, Upload, File, X } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,6 +14,8 @@ import { useNavigate } from "react-router-dom";
 export default function Apply() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [formData, setFormData] = useState({
     first_name: "",
     last_name: "",
@@ -36,12 +38,84 @@ export default function Apply() {
     setFormData({ ...formData, [field]: value });
   };
 
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error('Please upload a PDF or image file (JPG, PNG)');
+      return;
+    }
+
+    // Validate file size (5MB max)
+    const maxSize = 5 * 1024 * 1024;
+    if (file.size > maxSize) {
+      toast.error('File size must be less than 5MB');
+      return;
+    }
+
+    setSelectedFile(file);
+  };
+
+  const removeFile = () => {
+    setSelectedFile(null);
+    setFormData({ ...formData, document_url: "" });
+  };
+
+  const uploadDocument = async (): Promise<string | null> => {
+    if (!selectedFile) return null;
+
+    setUploading(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
+      const fileExt = selectedFile.name.split('.').pop();
+      const fileName = `${user.id}-${Date.now()}.${fileExt}`;
+      const filePath = `applications/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('documents')
+        .upload(filePath, selectedFile, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('documents')
+        .getPublicUrl(filePath);
+
+      return publicUrl;
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to upload document');
+      return null;
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!selectedFile) {
+      toast.error('Please upload a supporting document');
+      return;
+    }
+
     setLoading(true);
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
+
+      // Upload document first
+      const documentUrl = await uploadDocument();
+      if (!documentUrl) {
+        throw new Error('Failed to upload document');
+      }
 
       const { error } = await supabase.from("applications").insert([
         {
@@ -59,7 +133,7 @@ export default function Apply() {
           job_title: formData.job_title,
           years_experience: parseInt(formData.years_experience) || 0,
           membership_category: formData.membership_category as "student" | "associate" | "graduate" | "member" | "fellow",
-          document_url: formData.document_url,
+          document_url: documentUrl,
           user_id: user?.id || null,
           status: "pending",
         },
@@ -299,6 +373,54 @@ export default function Apply() {
                       </div>
                     </div>
 
+                    <div className="border-b border-border pb-6">
+                      <h3 className="text-xl font-bold mb-4">Supporting Documents</h3>
+                      <div>
+                        <label className="block text-sm font-medium mb-2">Upload Document (PDF or Image) *</label>
+                        <p className="text-xs text-muted-foreground mb-3">
+                          Upload your educational certificate, ID, or professional credentials (Max 5MB)
+                        </p>
+                        
+                        {!selectedFile ? (
+                          <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-primary transition-colors">
+                            <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                              <Upload className="w-8 h-8 text-muted-foreground mb-2" />
+                              <p className="text-sm text-muted-foreground">
+                                <span className="font-semibold">Click to upload</span> or drag and drop
+                              </p>
+                              <p className="text-xs text-muted-foreground mt-1">PDF, JPG, or PNG (max 5MB)</p>
+                            </div>
+                            <input
+                              type="file"
+                              className="hidden"
+                              accept=".pdf,.jpg,.jpeg,.png"
+                              onChange={handleFileChange}
+                              required
+                            />
+                          </label>
+                        ) : (
+                          <div className="flex items-center gap-3 p-4 border border-border rounded-lg bg-muted">
+                            <File className="w-8 h-8 text-primary flex-shrink-0" />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium truncate">{selectedFile.name}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                              </p>
+                            </div>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={removeFile}
+                              disabled={uploading || loading}
+                            >
+                              <X className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
                     <div className="pb-6">
                       <h3 className="text-xl font-bold mb-4">Declaration</h3>
                       <label className="flex items-start gap-3">
@@ -309,8 +431,8 @@ export default function Apply() {
                       </label>
                     </div>
 
-                    <Button type="submit" variant="default" size="lg" className="w-full" disabled={loading}>
-                      {loading ? "Submitting..." : "Submit Application"}
+                    <Button type="submit" variant="default" size="lg" className="w-full" disabled={loading || uploading}>
+                      {uploading ? "Uploading document..." : loading ? "Submitting..." : "Submit Application"}
                     </Button>
 
                     <p className="text-xs text-center text-muted-foreground">
