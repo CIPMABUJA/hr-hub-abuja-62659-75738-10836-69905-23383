@@ -142,19 +142,12 @@ export default function ProfilePage() {
         <Card>
           <CardContent className="pt-6">
             <div className="flex flex-col md:flex-row items-center gap-6 mb-6">
-              <div className="relative">
-                <Avatar className="h-24 w-24">
-                  <AvatarImage src="" />
-                  <AvatarFallback className="text-2xl">JD</AvatarFallback>
-                </Avatar>
-                <Button
-                  size="icon"
-                  variant="secondary"
-                  className="absolute bottom-0 right-0 rounded-full h-8 w-8"
-                >
-                  <Camera className="h-4 w-4" />
-                </Button>
-              </div>
+              <AvatarUpload
+                userId={user?.id || ""}
+                currentAvatarUrl={avatarUrl}
+                initials={`${formData.firstName?.[0] || ''}${formData.lastName?.[0] || ''}`}
+                onAvatarUpdated={setAvatarUrl}
+              />
               <div>
                 <h3 className="text-xl font-semibold">{formData.firstName} {formData.lastName}</h3>
                 <p className="text-sm text-muted-foreground">{formData.email}</p>
