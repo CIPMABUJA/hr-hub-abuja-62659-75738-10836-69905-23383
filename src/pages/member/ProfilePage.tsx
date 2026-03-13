@@ -52,6 +52,7 @@ export default function ProfilePage() {
     }
 
     if (data) {
+      setAvatarUrl(data.avatar_url);
       setFormData({
         firstName: data.first_name || '',
         lastName: data.last_name || '',
