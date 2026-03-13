@@ -3,18 +3,19 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Camera, Save, Loader2 } from "lucide-react";
+import { Save, Loader2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import AvatarUpload from "@/components/profile/AvatarUpload";
 
 export default function ProfilePage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -50,6 +51,7 @@ export default function ProfilePage() {
     }
 
     if (data) {
+      setAvatarUrl(data.avatar_url);
       setFormData({
         firstName: data.first_name || '',
         lastName: data.last_name || '',
@@ -139,19 +141,12 @@ export default function ProfilePage() {
         <Card>
           <CardContent className="pt-6">
             <div className="flex flex-col md:flex-row items-center gap-6 mb-6">
-              <div className="relative">
-                <Avatar className="h-24 w-24">
-                  <AvatarImage src="" />
-                  <AvatarFallback className="text-2xl">JD</AvatarFallback>
-                </Avatar>
-                <Button
-                  size="icon"
-                  variant="secondary"
-                  className="absolute bottom-0 right-0 rounded-full h-8 w-8"
-                >
-                  <Camera className="h-4 w-4" />
-                </Button>
-              </div>
+              <AvatarUpload
+                userId={user?.id || ""}
+                currentAvatarUrl={avatarUrl}
+                initials={`${formData.firstName?.[0] || ''}${formData.lastName?.[0] || ''}`}
+                onAvatarUpdated={setAvatarUrl}
+              />
               <div>
                 <h3 className="text-xl font-semibold">{formData.firstName} {formData.lastName}</h3>
                 <p className="text-sm text-muted-foreground">{formData.email}</p>
