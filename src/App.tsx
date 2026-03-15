@@ -36,6 +36,7 @@ import ResourcesManagement from "./pages/admin/ResourcesManagement";
 import ForumManagement from "./pages/admin/ForumManagement";
 import NewsManagement from "./pages/admin/NewsManagement";
 import AnalyticsPage from "./pages/admin/AnalyticsPage";
+import GalleryManagement from "./pages/admin/GalleryManagement";
 import Events from "./pages/Events";
 import ForumPostDetail from "./pages/member/ForumPostDetail";
 import EventPayment from "./pages/member/EventPayment";
