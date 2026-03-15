@@ -152,8 +152,8 @@ export default function Home() {
                 Who We Are
               </h2>
               <p className="text-lg text-muted-foreground mb-8">
-
-            </p>
+                The Chartered Institute of Personnel Management of Nigeria (CIPM) Abuja Branch is a key branch of Nigeria's foremost HR regulatory body. Based in the Federal Capital Territory, it serves as a hub for HR professionals across both the public and private sectors, providing knowledge, certification, and advocacy to help shape a more effective workforce.
+              </p>
               <Button variant="outline" asChild>
                 <Link to="/about">
                   Read More About Us <ArrowRight className="ml-2" />
