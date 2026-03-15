@@ -92,6 +92,7 @@ const App = () => (
           <Route path="/admin/news" element={<ProtectedRoute requireAdmin><NewsManagement /></ProtectedRoute>} />
           <Route path="/admin/analytics" element={<ProtectedRoute requireAdmin><AnalyticsPage /></ProtectedRoute>} />
           <Route path="/admin/settings" element={<ProtectedRoute requireAdmin><SettingsPage /></ProtectedRoute>} />
+          <Route path="/admin/gallery" element={<ProtectedRoute requireAdmin><GalleryManagement /></ProtectedRoute>} />
           
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
