@@ -1,12 +1,44 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { MapPin, Phone, Mail, Clock, Facebook, Twitter, Linkedin, Instagram } from "lucide-react";
+import { MapPin, Phone, Mail, Clock, Facebook, Twitter, Linkedin, Instagram, Loader2 } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export default function Contact() {
+  const [loading, setLoading] = useState(false);
+  const [form, setForm] = useState({
+    firstName: "", lastName: "", email: "", phone: "", subject: "", message: ""
+  });
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setForm(prev => ({ ...prev, [e.target.id]: e.target.value }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    const { error } = await supabase.from("contact_messages").insert({
+      first_name: form.firstName,
+      last_name: form.lastName,
+      email: form.email,
+      phone: form.phone || null,
+      subject: form.subject,
+      message: form.message,
+    });
+    setLoading(false);
+    if (error) {
+      toast.error("Failed to send message. Please try again.");
+      return;
+    }
+    toast.success("Message sent successfully! We'll get back to you soon.");
+    setForm({ firstName: "", lastName: "", email: "", phone: "", subject: "", message: "" });
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
@@ -128,59 +160,36 @@ export default function Contact() {
                 <Card className="shadow-medium">
                   <CardContent className="p-8">
                     <h2 className="text-2xl font-bold mb-6">Send us a Message</h2>
-                    <form className="space-y-4">
+                    <form className="space-y-4" onSubmit={handleSubmit}>
                       <div className="grid md:grid-cols-2 gap-4">
                         <div>
-                          <label htmlFor="firstName" className="block text-sm font-medium mb-2">
-                            First Name *
-                          </label>
-                          <Input id="firstName" placeholder="John" required />
+                          <label htmlFor="firstName" className="block text-sm font-medium mb-2">First Name *</label>
+                          <Input id="firstName" placeholder="John" required value={form.firstName} onChange={handleChange} />
                         </div>
                         <div>
-                          <label htmlFor="lastName" className="block text-sm font-medium mb-2">
-                            Last Name *
-                          </label>
-                          <Input id="lastName" placeholder="Doe" required />
+                          <label htmlFor="lastName" className="block text-sm font-medium mb-2">Last Name *</label>
+                          <Input id="lastName" placeholder="Doe" required value={form.lastName} onChange={handleChange} />
                         </div>
                       </div>
-
                       <div>
-                        <label htmlFor="email" className="block text-sm font-medium mb-2">
-                          Email Address *
-                        </label>
-                        <Input id="email" type="email" placeholder="john.doe@example.com" required />
+                        <label htmlFor="email" className="block text-sm font-medium mb-2">Email Address *</label>
+                        <Input id="email" type="email" placeholder="john.doe@example.com" required value={form.email} onChange={handleChange} />
                       </div>
-
                       <div>
-                        <label htmlFor="phone" className="block text-sm font-medium mb-2">
-                          Phone Number
-                        </label>
-                        <Input id="phone" type="tel" placeholder="+234 XXX XXX XXXX" />
+                        <label htmlFor="phone" className="block text-sm font-medium mb-2">Phone Number</label>
+                        <Input id="phone" type="tel" placeholder="+234 XXX XXX XXXX" value={form.phone} onChange={handleChange} />
                       </div>
-
                       <div>
-                        <label htmlFor="subject" className="block text-sm font-medium mb-2">
-                          Subject *
-                        </label>
-                        <Input id="subject" placeholder="How can we help you?" required />
+                        <label htmlFor="subject" className="block text-sm font-medium mb-2">Subject *</label>
+                        <Input id="subject" placeholder="How can we help you?" required value={form.subject} onChange={handleChange} />
                       </div>
-
                       <div>
-                        <label htmlFor="message" className="block text-sm font-medium mb-2">
-                          Message *
-                        </label>
-                        <Textarea 
-                          id="message" 
-                          placeholder="Tell us more about your inquiry..."
-                          rows={6}
-                          required
-                        />
+                        <label htmlFor="message" className="block text-sm font-medium mb-2">Message *</label>
+                        <Textarea id="message" placeholder="Tell us more about your inquiry..." rows={6} required value={form.message} onChange={handleChange} />
                       </div>
-
-                      <Button type="submit" variant="default" size="lg" className="w-full">
-                        Send Message
+                      <Button type="submit" variant="default" size="lg" className="w-full" disabled={loading}>
+                        {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Sending...</> : "Send Message"}
                       </Button>
-
                       <p className="text-xs text-muted-foreground text-center">
                         * Required fields. We respect your privacy and will never share your information.
                       </p>
@@ -211,21 +220,6 @@ export default function Contact() {
                 ></iframe>
               </Card>
             </div>
-          </div>
-        </section>
-
-        {/* FAQ Teaser */}
-        <section className="py-16">
-          <div className="container mx-auto px-4 text-center">
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-              Have More Questions?
-            </h2>
-            <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
-              Check out our frequently asked questions or reach out directly
-            </p>
-            <Button variant="outline" size="lg">
-              View FAQs
-            </Button>
           </div>
         </section>
       </main>

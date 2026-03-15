@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,9 +7,57 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Settings, Bell, Mail, Shield, Database, Users } from "lucide-react";
+import { Settings, Bell, Mail, Shield, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+
+interface BranchInfo {
+  name: string; code: string; address: string; phone: string; email: string;
+}
+interface MembershipFees {
+  student: number; associate: number; member: number; fellow: number;
+}
+interface Notifications {
+  new_applications: boolean; payments: boolean; event_registrations: boolean; membership_expiry: boolean; forum_activity: boolean;
+}
 
 export default function SettingsPage() {
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState("");
+  const [branchInfo, setBranchInfo] = useState<BranchInfo>({ name: "", code: "", address: "", phone: "", email: "" });
+  const [fees, setFees] = useState<MembershipFees>({ student: 0, associate: 0, member: 0, fellow: 0 });
+  const [notifications, setNotifications] = useState<Notifications>({
+    new_applications: true, payments: true, event_registrations: true, membership_expiry: true, forum_activity: false,
+  });
+
+  useEffect(() => { fetchSettings(); }, []);
+
+  const fetchSettings = async () => {
+    const { data } = await supabase.from("settings").select("*");
+    if (data) {
+      data.forEach((s: any) => {
+        if (s.key === "branch_info") setBranchInfo(s.value as unknown as BranchInfo);
+        if (s.key === "membership_fees") setFees(s.value as unknown as MembershipFees);
+        if (s.key === "notifications") setNotifications(s.value as unknown as Notifications);
+      });
+    }
+    setLoading(false);
+  };
+
+  const saveSetting = async (key: string, value: any) => {
+    setSaving(key);
+    const { error } = await supabase.from("settings").update({ value, updated_at: new Date().toISOString() }).eq("key", key);
+    setSaving("");
+    if (error) { toast.error("Failed to save"); return; }
+    toast.success("Settings saved successfully");
+  };
+
+  if (loading) return (
+    <DashboardLayout userRole="admin">
+      <div className="flex items-center justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
+    </DashboardLayout>
+  );
+
   return (
     <DashboardLayout userRole="admin">
       <div className="space-y-6">
@@ -19,22 +68,8 @@ export default function SettingsPage() {
 
         <Tabs defaultValue="general" className="space-y-6">
           <TabsList>
-            <TabsTrigger value="general">
-              <Settings className="mr-2 h-4 w-4" />
-              General
-            </TabsTrigger>
-            <TabsTrigger value="notifications">
-              <Bell className="mr-2 h-4 w-4" />
-              Notifications
-            </TabsTrigger>
-            <TabsTrigger value="email">
-              <Mail className="mr-2 h-4 w-4" />
-              Email
-            </TabsTrigger>
-            <TabsTrigger value="security">
-              <Shield className="mr-2 h-4 w-4" />
-              Security
-            </TabsTrigger>
+            <TabsTrigger value="general"><Settings className="mr-2 h-4 w-4" />General</TabsTrigger>
+            <TabsTrigger value="notifications"><Bell className="mr-2 h-4 w-4" />Notifications</TabsTrigger>
           </TabsList>
 
           <TabsContent value="general" className="space-y-6">
@@ -46,55 +81,49 @@ export default function SettingsPage() {
               <CardContent className="space-y-4">
                 <div className="grid md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="branch-name">Branch Name</Label>
-                    <Input id="branch-name" defaultValue="CIPM Abuja Branch" />
+                    <Label>Branch Name</Label>
+                    <Input value={branchInfo.name} onChange={e => setBranchInfo(p => ({ ...p, name: e.target.value }))} />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="branch-code">Branch Code</Label>
-                    <Input id="branch-code" defaultValue="ABJ" />
+                    <Label>Branch Code</Label>
+                    <Input value={branchInfo.code} onChange={e => setBranchInfo(p => ({ ...p, code: e.target.value }))} />
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="address">Address</Label>
-                  <Textarea id="address" defaultValue="Plot 123, Central Business District, Abuja" rows={3} />
+                  <Label>Address</Label>
+                  <Textarea value={branchInfo.address} onChange={e => setBranchInfo(p => ({ ...p, address: e.target.value }))} rows={3} />
                 </div>
                 <div className="grid md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="phone">Phone Number</Label>
-                    <Input id="phone" type="tel" defaultValue="+234 809 123 4567" />
+                    <Label>Phone</Label>
+                    <Input value={branchInfo.phone} onChange={e => setBranchInfo(p => ({ ...p, phone: e.target.value }))} />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="email">Email Address</Label>
-                    <Input id="email" type="email" defaultValue="info@cipmabuja.org" />
+                    <Label>Email</Label>
+                    <Input type="email" value={branchInfo.email} onChange={e => setBranchInfo(p => ({ ...p, email: e.target.value }))} />
                   </div>
                 </div>
-                <Button>Save Changes</Button>
+                <Button onClick={() => saveSetting("branch_info", branchInfo)} disabled={saving === "branch_info"}>
+                  {saving === "branch_info" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}Save Changes
+                </Button>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader>
-                <CardTitle>Membership Settings</CardTitle>
+                <CardTitle>Membership Fees</CardTitle>
                 <CardDescription>Configure membership categories and fees</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="student-fee">Student Member Annual Fee (₦)</Label>
-                  <Input id="student-fee" type="number" defaultValue="15000" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="associate-fee">Associate Member Annual Fee (₦)</Label>
-                  <Input id="associate-fee" type="number" defaultValue="45000" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="full-fee">Full Member Annual Fee (₦)</Label>
-                  <Input id="full-fee" type="number" defaultValue="65000" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="fellow-fee">Fellow Annual Fee (₦)</Label>
-                  <Input id="fellow-fee" type="number" defaultValue="85000" />
-                </div>
-                <Button>Save Changes</Button>
+                {(["student", "associate", "member", "fellow"] as const).map(cat => (
+                  <div key={cat} className="space-y-2">
+                    <Label>{cat.charAt(0).toUpperCase() + cat.slice(1)} Annual Fee (₦)</Label>
+                    <Input type="number" value={fees[cat]} onChange={e => setFees(p => ({ ...p, [cat]: Number(e.target.value) }))} />
+                  </div>
+                ))}
+                <Button onClick={() => saveSetting("membership_fees", fees)} disabled={saving === "membership_fees"}>
+                  {saving === "membership_fees" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}Save Changes
+                </Button>
               </CardContent>
             </Card>
           </TabsContent>
@@ -106,168 +135,24 @@ export default function SettingsPage() {
                 <CardDescription>Configure system notification settings</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>New Member Applications</Label>
-                    <p className="text-sm text-muted-foreground">Notify when new members apply</p>
-                  </div>
-                  <Switch defaultChecked />
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>Payment Notifications</Label>
-                    <p className="text-sm text-muted-foreground">Notify on successful payments</p>
-                  </div>
-                  <Switch defaultChecked />
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>Event Registrations</Label>
-                    <p className="text-sm text-muted-foreground">Notify when members register for events</p>
-                  </div>
-                  <Switch defaultChecked />
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>Membership Expiry</Label>
-                    <p className="text-sm text-muted-foreground">Notify 30 days before expiry</p>
-                  </div>
-                  <Switch defaultChecked />
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>Forum Activity</Label>
-                    <p className="text-sm text-muted-foreground">Notify on new forum posts</p>
-                  </div>
-                  <Switch />
-                </div>
-                <Button>Save Preferences</Button>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="email" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Email Configuration</CardTitle>
-                <CardDescription>Configure email templates and settings</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="smtp-host">SMTP Host</Label>
-                  <Input id="smtp-host" placeholder="smtp.example.com" />
-                </div>
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="smtp-port">SMTP Port</Label>
-                    <Input id="smtp-port" type="number" placeholder="587" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="smtp-username">SMTP Username</Label>
-                    <Input id="smtp-username" placeholder="username" />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="from-email">From Email Address</Label>
-                  <Input id="from-email" type="email" defaultValue="noreply@cipmabuja.org" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="from-name">From Name</Label>
-                  <Input id="from-name" defaultValue="CIPM Abuja Branch" />
-                </div>
-                <Button>Save Configuration</Button>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Email Templates</CardTitle>
-                <CardDescription>Manage automated email templates</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between p-3 border rounded-lg">
-                  <div>
-                    <p className="font-medium">Welcome Email</p>
-                    <p className="text-sm text-muted-foreground">Sent to new members</p>
-                  </div>
-                  <Button variant="outline" size="sm">Edit</Button>
-                </div>
-                <div className="flex items-center justify-between p-3 border rounded-lg">
-                  <div>
-                    <p className="font-medium">Payment Receipt</p>
-                    <p className="text-sm text-muted-foreground">Sent after successful payment</p>
-                  </div>
-                  <Button variant="outline" size="sm">Edit</Button>
-                </div>
-                <div className="flex items-center justify-between p-3 border rounded-lg">
-                  <div>
-                    <p className="font-medium">Event Registration</p>
-                    <p className="text-sm text-muted-foreground">Confirmation email for events</p>
-                  </div>
-                  <Button variant="outline" size="sm">Edit</Button>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="security" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Security Settings</CardTitle>
-                <CardDescription>Manage security and access control</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>Two-Factor Authentication</Label>
-                    <p className="text-sm text-muted-foreground">Require 2FA for admin accounts</p>
-                  </div>
-                  <Switch />
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>Session Timeout</Label>
-                    <p className="text-sm text-muted-foreground">Auto logout after inactivity</p>
-                  </div>
-                  <Switch defaultChecked />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="timeout-duration">Session Timeout Duration (minutes)</Label>
-                  <Input id="timeout-duration" type="number" defaultValue="30" />
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>Password Expiry</Label>
-                    <p className="text-sm text-muted-foreground">Require password change every 90 days</p>
-                  </div>
-                  <Switch defaultChecked />
-                </div>
-                <Button>Save Security Settings</Button>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Admin Users</CardTitle>
-                <CardDescription>Manage admin user accounts</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between p-3 border rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <Users className="h-8 w-8 text-muted-foreground" />
-                      <div>
-                        <p className="font-medium">Super Admin</p>
-                        <p className="text-sm text-muted-foreground">admin@cipmabuja.org</p>
-                      </div>
+                {([
+                  { key: "new_applications", label: "New Member Applications", desc: "Notify when new members apply" },
+                  { key: "payments", label: "Payment Notifications", desc: "Notify on successful payments" },
+                  { key: "event_registrations", label: "Event Registrations", desc: "Notify when members register for events" },
+                  { key: "membership_expiry", label: "Membership Expiry", desc: "Notify 30 days before expiry" },
+                  { key: "forum_activity", label: "Forum Activity", desc: "Notify on new forum posts" },
+                ] as const).map(item => (
+                  <div key={item.key} className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label>{item.label}</Label>
+                      <p className="text-sm text-muted-foreground">{item.desc}</p>
                     </div>
-                    <Button variant="outline" size="sm">Edit</Button>
+                    <Switch checked={notifications[item.key]} onCheckedChange={v => setNotifications(p => ({ ...p, [item.key]: v }))} />
                   </div>
-                  <Button variant="outline" className="w-full">
-                    <Users className="mr-2 h-4 w-4" />
-                    Add Admin User
-                  </Button>
-                </div>
+                ))}
+                <Button onClick={() => saveSetting("notifications", notifications)} disabled={saving === "notifications"}>
+                  {saving === "notifications" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}Save Preferences
+                </Button>
               </CardContent>
             </Card>
           </TabsContent>
