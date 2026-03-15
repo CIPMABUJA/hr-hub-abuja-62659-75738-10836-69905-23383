@@ -94,14 +94,14 @@ const teamMembers = [{
   image: branchTreasurerPhoto
 }];
 const galleryImages = [
-  gallery1,
-  gallery2,
-  gallery3,
-  gallery4,
-  gallery5,
-  gallery6,
-  gallery7
-];
+gallery1,
+gallery2,
+gallery3,
+gallery4,
+gallery5,
+gallery6,
+gallery7];
+
 export default function Home() {
   return <div className="min-h-screen flex flex-col">
       <Header />
@@ -152,8 +152,8 @@ export default function Home() {
                 Who We Are
               </h2>
               <p className="text-lg text-muted-foreground mb-8">
-                CIPM Abuja Branch is a key regional chapter of Nigeria's foremost HR regulatory body. Based in the Federal Capital Territory, we serve as a hub for HR professionals across public and private sectors, providing knowledge, certification, and advocacy to shape a more effective workforce.
-              </p>
+
+            </p>
               <Button variant="outline" asChild>
                 <Link to="/about">
                   Read More About Us <ArrowRight className="ml-2" />
@@ -292,13 +292,13 @@ export default function Home() {
             <div className="max-w-5xl mx-auto">
               <Carousel className="w-full">
                 <CarouselContent>
-                  {galleryImages.map((image, index) => (
-                    <CarouselItem key={index} className="md:basis-1/2 lg:basis-1/3">
+                  {galleryImages.map((image, index) =>
+                <CarouselItem key={index} className="md:basis-1/2 lg:basis-1/3">
                       <div className="relative overflow-hidden rounded-lg shadow-medium aspect-[4/3]">
                         <img src={image} alt={`Event ${index + 1}`} className="w-full h-full object-cover" />
                       </div>
                     </CarouselItem>
-                  ))}
+                )}
                 </CarouselContent>
                 <CarouselPrevious />
                 <CarouselNext />
