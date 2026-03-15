@@ -58,6 +58,7 @@ export default function DashboardLayout({ children, userRole = "member" }: Dashb
     { icon: MessageSquare, label: "Forum", path: "/admin/forum" },
     { icon: Bell, label: "News", path: "/admin/news" },
     { icon: TrendingUp, label: "Analytics", path: "/admin/analytics" },
+    { icon: BookOpen, label: "Gallery", path: "/admin/gallery" },
   ];
 
   const navItems = userRole === "admin" ? adminNavItems : memberNavItems;

@@ -36,6 +36,7 @@ import ResourcesManagement from "./pages/admin/ResourcesManagement";
 import ForumManagement from "./pages/admin/ForumManagement";
 import NewsManagement from "./pages/admin/NewsManagement";
 import AnalyticsPage from "./pages/admin/AnalyticsPage";
+import GalleryManagement from "./pages/admin/GalleryManagement";
 import Events from "./pages/Events";
 import ForumPostDetail from "./pages/member/ForumPostDetail";
 import EventPayment from "./pages/member/EventPayment";
@@ -91,6 +92,7 @@ const App = () => (
           <Route path="/admin/news" element={<ProtectedRoute requireAdmin><NewsManagement /></ProtectedRoute>} />
           <Route path="/admin/analytics" element={<ProtectedRoute requireAdmin><AnalyticsPage /></ProtectedRoute>} />
           <Route path="/admin/settings" element={<ProtectedRoute requireAdmin><SettingsPage /></ProtectedRoute>} />
+          <Route path="/admin/gallery" element={<ProtectedRoute requireAdmin><GalleryManagement /></ProtectedRoute>} />
           
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
